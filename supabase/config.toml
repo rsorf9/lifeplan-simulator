@@ -1,0 +1,24 @@
+# 最低限の Supabase CLI 設定。詳細は supabase init で生成される config.toml を参照。
+project_id = "pktkiraixhiflfhpcpcq"
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+enable_signup = true
+enable_confirmations = true
+minimum_password_length = 12
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[auth.external.google]
+enabled = false
+# client_id = ""
+# secret = ""
+
+[auth.external.github]
+enabled = false
+# client_id = ""
+# secret = ""
