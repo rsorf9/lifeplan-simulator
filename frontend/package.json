@@ -1,14 +1,14 @@
-{
+﻿{
   "name": "lifeplan-simulator-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest"
   },
   "dependencies": {
