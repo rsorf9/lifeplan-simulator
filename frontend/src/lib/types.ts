@@ -1,7 +1,19 @@
 // Supabase テーブル型定義（最小）。
 // 本番では supabase gen types typescript で自動生成することを推奨。
 
+import type { EducationPath } from './educationCosts';
+
 export type SliderInputs = Record<string, number>;
+
+export interface ChildInfo {
+  age: number;
+  path: EducationPath;
+}
+
+export interface ScenarioExtraSettings {
+  has_spouse?: boolean;
+  children?: ChildInfo[];
+}
 
 export interface Scenario {
   id: string;
@@ -10,7 +22,7 @@ export interface Scenario {
   description: string | null;
   version: number;
   inputs: SliderInputs;
-  extra_settings: Record<string, unknown>;
+  extra_settings: ScenarioExtraSettings;
   parent_scenario_id: string | null;
   is_archived: boolean;
   created_at: string;

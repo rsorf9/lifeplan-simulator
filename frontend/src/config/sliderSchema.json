@@ -1,5 +1,77 @@
 [
   {
+    "key": "current_age",
+    "label": "現在の年齢（本人）",
+    "group": "basic",
+    "unit": "歳",
+    "min": 18,
+    "max": 80,
+    "step": 1,
+    "default": 35,
+    "tooltip": "シミュレーション開始時点の年齢",
+    "valueType": "integer"
+  },
+  {
+    "key": "retirement_age",
+    "label": "退職予定年齢（本人）",
+    "group": "basic",
+    "unit": "歳",
+    "min": 50,
+    "max": 80,
+    "step": 1,
+    "default": 65,
+    "valueType": "integer"
+  },
+  {
+    "key": "spouse_age",
+    "label": "現在の年齢（配偶者）",
+    "group": "basic",
+    "unit": "歳",
+    "min": 18,
+    "max": 100,
+    "step": 1,
+    "default": 35,
+    "valueType": "integer",
+    "requires": "has_spouse"
+  },
+  {
+    "key": "spouse_retirement_age",
+    "label": "退職予定年齢（配偶者）",
+    "group": "basic",
+    "unit": "歳",
+    "min": 50,
+    "max": 80,
+    "step": 1,
+    "default": 65,
+    "valueType": "integer",
+    "requires": "has_spouse"
+  },
+  {
+    "key": "annual_income",
+    "label": "手取り年収（本人）",
+    "group": "income",
+    "unit": "万円",
+    "min": 0,
+    "max": 3000,
+    "step": 10,
+    "default": 480,
+    "tooltip": "社会保険料・税金控除後の年収",
+    "valueType": "integer"
+  },
+  {
+    "key": "spouse_income",
+    "label": "手取り年収（配偶者）",
+    "group": "income",
+    "unit": "万円",
+    "min": 0,
+    "max": 3000,
+    "step": 10,
+    "default": 300,
+    "tooltip": "配偶者ありの場合のみ計算に反映",
+    "valueType": "integer",
+    "requires": "has_spouse"
+  },
+  {
     "key": "house_price",
     "label": "住宅購入金額",
     "group": "housing",
@@ -45,6 +117,30 @@
     "valueType": "integer"
   },
   {
+    "key": "monthly_expense",
+    "label": "月々の支出",
+    "group": "expense",
+    "unit": "万円",
+    "min": 0,
+    "max": 100,
+    "step": 1,
+    "default": 22,
+    "tooltip": "食費・光熱費・通信・日用品など毎月発生する支出",
+    "valueType": "integer"
+  },
+  {
+    "key": "annual_expense",
+    "label": "年間の特別支出",
+    "group": "expense",
+    "unit": "万円",
+    "min": 0,
+    "max": 500,
+    "step": 5,
+    "default": 50,
+    "tooltip": "保険・旅行・帰省・車検など年単位で発生する支出",
+    "valueType": "integer"
+  },
+  {
     "key": "current_savings",
     "label": "現在の貯蓄",
     "group": "savings",
@@ -67,6 +163,18 @@
     "valueType": "integer"
   },
   {
+    "key": "savings_return",
+    "label": "預貯金の期待利回り",
+    "group": "savings",
+    "unit": "%",
+    "min": 0,
+    "max": 5,
+    "step": 0.05,
+    "default": 0.05,
+    "tooltip": "普通預金・定期預金などの想定利回り",
+    "valueType": "float"
+  },
+  {
     "key": "monthly_investment",
     "label": "毎月の投資額",
     "group": "investment",
@@ -87,27 +195,5 @@
     "step": 0.1,
     "default": 5.0,
     "valueType": "float"
-  },
-  {
-    "key": "annual_income",
-    "label": "年収",
-    "group": "income",
-    "unit": "万円",
-    "min": 0,
-    "max": 5000,
-    "step": 10,
-    "default": 600,
-    "valueType": "integer"
-  },
-  {
-    "key": "retirement_age",
-    "label": "退職予定年齢",
-    "group": "income",
-    "unit": "歳",
-    "min": 50,
-    "max": 80,
-    "step": 1,
-    "default": 65,
-    "valueType": "integer"
   }
 ]
