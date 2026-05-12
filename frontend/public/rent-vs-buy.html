@@ -87,7 +87,6 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     <div class="field"><div class="field-row"><label>借入期間</label><div><input type="number" id="loanYears" value="35" min="1" step="1"><span class="field-unit">年</span></div></div></div>
     <div class="field"><div class="field-row"><label>金利（年率）</label><div><input type="number" id="rate" value="1.0" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
     <div class="field"><div class="field-row"><label>管理費＋修繕積立（月額）</label><div><input type="number" id="maint" value="2" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
-    <div class="field"><div class="field-row"><label>物件価値の年間下落率</label><div><input type="number" id="decline" value="1.5" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
   </div>
 
   <div class="section">
@@ -129,12 +128,12 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     </div>
   </div>
 
-  <footer>※ 簡易計算です。住宅ローン控除・固定資産税・修繕実費・税制等は反映されていません。詳細は FP にご相談を。</footer>
+  <footer>※ 簡易計算です。物件価値は購入時のまま据え置きで試算しています。住宅ローン控除・固定資産税・修繕実費等は反映されません。詳細は FP にご相談を。</footer>
 </div>
 
 <script>
-const KEY = "rentVsBuyV1";
-const FIELDS = ["rent","initRent","renewal","moving","price","down","loanYears","rate","maint","decline","period"];
+const KEY = "rentVsBuyV2";
+const FIELDS = ["rent","initRent","renewal","moving","price","down","loanYears","rate","maint","period"];
 
 function getNum(id, fallback) {
   const el = document.getElementById(id);
@@ -185,7 +184,6 @@ function calculate() {
   const loanYears = Math.max(1, getNum("loanYears", 35));
   const rate      = getNum("rate", 1.0);
   const maint     = getNum("maint", 2);
-  const decline   = getNum("decline", 1.5);
   const period    = Math.max(1, getNum("period", 10));
 
   // 賃貸計算（すべて万円）
@@ -197,14 +195,14 @@ function calculate() {
   const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal + rentMovingTotal;
   const rentMonthlyAvg = rentTotal / period / 12;
 
-  // 購入計算（万円ベースに統一）
+  // 購入計算（物件価値は購入価格のまま据え置き）
   const initBuyFees = price * 0.07; // 諸経費 7%
   const loanPrincipalYen = Math.max(price - down, 0) * 10000;
   const mPayYen = monthlyPayment(loanPrincipalYen, rate, loanYears);
   const monthsInPeriod = Math.min(period * 12, loanYears * 12);
   const loanPaidMan = (mPayYen * monthsInPeriod) / 10000;
   const maintTotal = maint * 12 * period;
-  const residual = price * Math.pow(1 - decline / 100, period);
+  const residual = price; // 物件価値は据え置き
   const buyTotal = down + initBuyFees + loanPaidMan + maintTotal - residual;
   const buyCashMonthlyMan = (mPayYen / 10000) + maint;
 
@@ -235,7 +233,7 @@ function calculate() {
     ["家賃 / ローン返済（期間中）",    rentMonthlyTotal,    loanPaidMan],
     ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
-    ["残存価値（マイナス＝資産）",     0,                   -residual],
+    ["売却想定額（マイナス＝資産）",  0,                   -residual],
   ];
   let html = "";
   for (const r of rows) {
@@ -266,7 +264,7 @@ function calculate() {
       responsive: true,
       plugins: {
         legend: { display: false },
-        title: { display: true, text: `${period}年での総コスト比較（万円）` },
+        title: { display: true, text: `${period}年での実質負担比較（万円）` },
       },
       scales: { y: { beginAtZero: true } },
     },
