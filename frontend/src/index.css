@@ -388,3 +388,68 @@ button.secondary:hover {
   .table-wrap { background: white !important; border-color: #cbd5e1 !important; }
   .muted { color: #475569 !important; }
 }
+
+/* 管理者：アカウント作成セクション */
+.admin-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.admin-card-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.create-user-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.create-user-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.create-user-form input {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.create-user-form button[type='submit'] {
+  width: fit-content;
+}
+.admin-section-title {
+  margin: 24px 0 8px;
+  font-size: 18px;
+}
+
+.status-banned {
+  color: #fca5a5;
+  font-weight: 600;
+  background: rgba(220, 38, 38, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.status-active {
+  color: #86efac;
+  font-weight: 600;
+  background: rgba(22, 163, 74, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
