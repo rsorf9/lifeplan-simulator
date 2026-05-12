@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>賃貸内見中？買うとどうなる？30秒比較</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  line-height: 1.5;
+  padding: 16px;
+}
+.wrap { max-width: 540px; margin: 0 auto; }
+header.app-head { margin-bottom: 14px; }
+h1 { font-size: 19px; margin: 0 0 4px; line-height: 1.3; }
+.subtitle { font-size: 12px; color: #64748b; margin: 0; }
+.section { background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.section h2 { font-size: 14px; margin: 0 0 10px; color: #475569; font-weight: 600; }
+.field { margin-bottom: 12px; }
+.field-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.field label { font-size: 13px; flex: 1; }
+.field input[type="number"] {
+  width: 90px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; text-align: right;
+}
+.field-unit { font-size: 11px; color: #64748b; margin-left: 4px; }
+.calc-button {
+  width: 100%; padding: 14px; background: #2563eb; color: white; border: 0;
+  border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer;
+  margin: 4px 0 16px; transition: opacity 0.15s;
+}
+.calc-button:hover { opacity: 0.92; }
+.verdict {
+  text-align: center; padding: 14px; border-radius: 10px; font-weight: 700;
+  margin-bottom: 12px; font-size: 15px;
+}
+.verdict.buy { background: #dcfce7; color: #166534; }
+.verdict.rent { background: #dbeafe; color: #1e40af; }
+.summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.summary-card { background: white; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+.summary-card.rent { border-color: #93c5fd; background: #eff6ff; }
+.summary-card.buy { border-color: #86efac; background: #f0fdf4; }
+.summary-card .lbl { font-size: 11px; color: #64748b; }
+.summary-card .val { font-size: 18px; font-weight: 700; margin-top: 2px; line-height: 1.1; }
+.summary-card .sub { font-size: 11px; color: #64748b; margin-top: 6px; }
+.summary-card .sub-val { font-size: 13px; font-weight: 600; }
+.result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.result-table th, .result-table td { padding: 8px 6px; text-align: right; border-bottom: 1px solid #e2e8f0; }
+.result-table th:first-child, .result-table td:first-child { text-align: left; }
+.result-table thead { background: #f1f5f9; }
+.result-table tr.total td { font-weight: 700; background: #f8fafc; }
+.win-buy { color: #16a34a; font-weight: 700; }
+.win-rent { color: #2563eb; font-weight: 700; }
+canvas { max-width: 100%; }
+footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4px; }
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  .summary-box { grid-template-columns: 1fr; }
+  h1 { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-head">
+    <h1>🏠 賃貸内見中？買うとどうなる？30秒比較</h1>
+    <p class="subtitle">入力するだけで「賃貸 vs 購入」の総額と月々負担を即比較</p>
+  </header>
+
+  <div class="section">
+    <h2>📝 賃貸の条件</h2>
+    <div class="field"><div class="field-row"><label>家賃（月額）</label><div><input type="number" id="rent" value="10" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>初期費用（敷金礼金等）</label><div><input type="number" id="initRent" value="30" min="0" step="1"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>更新料（2年毎）</label><div><input type="number" id="renewal" value="1" min="0" step="0.5"><span class="field-unit">ヶ月分</span></div></div></div>
+    <div class="field"><div class="field-row"><label>引越し費用（次回移動時）</label><div><input type="number" id="moving" value="20" min="0" step="1"><span class="field-unit">万円</span></div></div></div>
+  </div>
+
+  <div class="section">
+    <h2>🏘️ 購入の条件</h2>
+    <div class="field"><div class="field-row"><label>物件価格</label><div><input type="number" id="price" value="4000" min="0" step="50"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>頭金</label><div><input type="number" id="down" value="1000" min="0" step="50"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>借入期間</label><div><input type="number" id="loanYears" value="35" min="1" step="1"><span class="field-unit">年</span></div></div></div>
+    <div class="field"><div class="field-row"><label>金利（年率）</label><div><input type="number" id="rate" value="1.0" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
+    <div class="field"><div class="field-row"><label>管理費＋修繕積立（月額）</label><div><input type="number" id="maint" value="2" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>物件価値の年間下落率</label><div><input type="number" id="decline" value="1.5" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
+  </div>
+
+  <div class="section">
+    <h2>⏳ 比較条件</h2>
+    <div class="field"><div class="field-row"><label>比較する年数</label><div><input type="number" id="period" value="10" min="1" max="50" step="1"><span class="field-unit">年</span></div></div></div>
+  </div>
+
+  <button class="calc-button" onclick="calculate()">この物件で比較する</button>
+
+  <div id="results" style="display:none">
+    <div id="verdict" class="verdict"></div>
+    <div class="summary-box">
+      <div class="summary-card rent">
+        <div class="lbl">賃貸の総支払</div>
+        <div class="val" id="rentTotal">—</div>
+        <div class="sub">月平均</div>
+        <div class="sub-val" id="rentMonthly">—</div>
+      </div>
+      <div class="summary-card buy">
+        <div class="lbl">購入の実質負担</div>
+        <div class="val" id="buyTotal">—</div>
+        <div class="sub">月キャッシュアウト</div>
+        <div class="sub-val" id="buyMonthly">—</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📊 内訳比較</h2>
+      <table class="result-table">
+        <thead><tr><th>項目</th><th>賃貸</th><th>購入</th><th>差額</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>📈 ビジュアル</h2>
+      <canvas id="chartTotal" height="180"></canvas>
+      <canvas id="chartMonthly" height="180" style="margin-top:16px"></canvas>
+    </div>
+  </div>
+
+  <footer>※ 簡易計算です。住宅ローン控除・固定資産税・修繕実費・税制等は反映されていません。詳細は FP にご相談を。</footer>
+</div>
+
+<script>
+const KEY = "rentVsBuyV1";
+const FIELDS = ["rent","initRent","renewal","moving","price","down","loanYears","rate","maint","decline","period"];
+
+function getNum(id, fallback) {
+  const el = document.getElementById(id);
+  const v = parseFloat(el.value);
+  return Number.isFinite(v) && v >= 0 ? v : fallback;
+}
+
+function restore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    for (const f of FIELDS) if (saved[f] !== undefined) {
+      const el = document.getElementById(f);
+      if (el) el.value = saved[f];
+    }
+  } catch (e) {}
+}
+function saveAll() {
+  const obj = {};
+  for (const f of FIELDS) obj[f] = document.getElementById(f).value;
+  try { localStorage.setItem(KEY, JSON.stringify(obj)); } catch (e) {}
+}
+restore();
+for (const f of FIELDS) {
+  document.getElementById(f).addEventListener("change", saveAll);
+}
+
+const fmtMan = (v) => `${Math.round(v).toLocaleString()} 万円`;
+
+// 元利均等返済の月額（円）
+function monthlyPayment(principalYen, annualRatePct, years) {
+  const r = annualRatePct / 12 / 100;
+  const n = years * 12;
+  if (n <= 0) return 0;
+  if (r === 0) return principalYen / n;
+  return principalYen * r / (1 - Math.pow(1 + r, -n));
+}
+
+const charts = {};
+
+function calculate() {
+  saveAll();
+  const rent      = getNum("rent", 10);
+  const initRent  = getNum("initRent", 30);
+  const renewal   = getNum("renewal", 1);
+  const moving    = getNum("moving", 20);
+  const price     = getNum("price", 4000);
+  const down      = getNum("down", 1000);
+  const loanYears = Math.max(1, getNum("loanYears", 35));
+  const rate      = getNum("rate", 1.0);
+  const maint     = getNum("maint", 2);
+  const decline   = getNum("decline", 1.5);
+  const period    = Math.max(1, getNum("period", 10));
+
+  // 賃貸計算（すべて万円）
+  const renewalsCount = Math.max(0, Math.floor(period / 2));
+  const movesCount    = Math.max(0, renewalsCount - 1);
+  const rentMonthlyTotal  = rent * 12 * period;
+  const rentRenewalTotal  = rent * renewal * renewalsCount;
+  const rentMovingTotal   = moving * movesCount;
+  const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal + rentMovingTotal;
+  const rentMonthlyAvg = rentTotal / period / 12;
+
+  // 購入計算（万円ベースに統一）
+  const initBuyFees = price * 0.07; // 諸経費 7%
+  const loanPrincipalYen = Math.max(price - down, 0) * 10000;
+  const mPayYen = monthlyPayment(loanPrincipalYen, rate, loanYears);
+  const monthsInPeriod = Math.min(period * 12, loanYears * 12);
+  const loanPaidMan = (mPayYen * monthsInPeriod) / 10000;
+  const maintTotal = maint * 12 * period;
+  const residual = price * Math.pow(1 - decline / 100, period);
+  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal - residual;
+  const buyCashMonthlyMan = (mPayYen / 10000) + maint;
+
+  // 表示
+  document.getElementById("results").style.display = "block";
+  document.getElementById("rentTotal").textContent = fmtMan(rentTotal);
+  document.getElementById("rentMonthly").textContent = `${rentMonthlyAvg.toFixed(1)} 万円`;
+  document.getElementById("buyTotal").textContent = fmtMan(buyTotal);
+  document.getElementById("buyMonthly").textContent = `${buyCashMonthlyMan.toFixed(1)} 万円`;
+
+  // 評価
+  const diff = buyTotal - rentTotal;
+  const verdict = document.getElementById("verdict");
+  if (diff < 0) {
+    verdict.className = "verdict buy";
+    verdict.innerHTML = `🟢 ${period} 年で見ると <b>購入が ${fmtMan(Math.abs(diff))} お得</b>`;
+  } else if (diff > 0) {
+    verdict.className = "verdict rent";
+    verdict.innerHTML = `🔵 ${period} 年で見ると <b>賃貸が ${fmtMan(Math.abs(diff))} お得</b>`;
+  } else {
+    verdict.className = "verdict rent";
+    verdict.innerHTML = `⚖️ ${period} 年で見るとほぼ同じ`;
+  }
+
+  // 表
+  const rows = [
+    ["初期費用",                     initRent,            down + initBuyFees],
+    ["家賃 / ローン返済（期間中）",    rentMonthlyTotal,    loanPaidMan],
+    ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
+    ["維持費（管理費+修繕）",         0,                   maintTotal],
+    ["残存価値（マイナス＝資産）",     0,                   -residual],
+  ];
+  let html = "";
+  for (const r of rows) {
+    const d = r[2] - r[1];
+    const cls = Math.abs(d) < 0.5 ? "" : (d < 0 ? "win-buy" : "win-rent");
+    const sign = d > 0 ? "+" : "";
+    html += `<tr><td>${r[0]}</td><td>${fmtMan(r[1])}</td><td>${fmtMan(r[2])}</td><td class="${cls}">${sign}${fmtMan(d)}</td></tr>`;
+  }
+  const dTotal = buyTotal - rentTotal;
+  const clsTotal = Math.abs(dTotal) < 0.5 ? "" : (dTotal < 0 ? "win-buy" : "win-rent");
+  html += `<tr class="total"><td>合計</td><td>${fmtMan(rentTotal)}</td><td>${fmtMan(buyTotal)}</td><td class="${clsTotal}">${dTotal > 0 ? "+" : ""}${fmtMan(dTotal)}</td></tr>`;
+  document.getElementById("tableBody").innerHTML = html;
+
+  // グラフ
+  if (charts.total) charts.total.destroy();
+  if (charts.monthly) charts.monthly.destroy();
+  charts.total = new Chart(document.getElementById("chartTotal"), {
+    type: "bar",
+    data: {
+      labels: ["賃貸", "購入"],
+      datasets: [{
+        label: `${period}年総額（万円）`,
+        data: [Math.round(rentTotal), Math.round(buyTotal)],
+        backgroundColor: ["#60a5fa", "#86efac"],
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: `${period}年での総コスト比較（万円）` },
+      },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+  charts.monthly = new Chart(document.getElementById("chartMonthly"), {
+    type: "bar",
+    data: {
+      labels: ["賃貸（家賃）", "購入（ローン+維持）"],
+      datasets: [{
+        label: "月々のキャッシュアウト（万円）",
+        data: [+rent.toFixed(2), +buyCashMonthlyMan.toFixed(2)],
+        backgroundColor: ["#3b82f6", "#22c55e"],
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: "毎月の固定支出（万円）" },
+      },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+}
+
+// 初回自動計算
+window.addEventListener("load", () => setTimeout(calculate, 50));
+</script>
+</body>
+</html>

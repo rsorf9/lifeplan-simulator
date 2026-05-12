@@ -453,3 +453,55 @@ button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ログイン画面：2カラム（左=サインイン、右=比較ツール） */
+.auth-wrap {
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--bg);
+}
+.auth-grid {
+  display: grid;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 980px) {
+  .auth-grid {
+    grid-template-columns: 420px 1fr;
+    align-items: start;
+  }
+}
+.auth-grid .auth-card { max-width: 100%; }
+
+.tool-card {
+  background: var(--panel);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.tool-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.tool-card-header h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--text);
+}
+.tool-card-header .muted { margin: 0; }
+.open-link {
+  margin-left: 6px;
+  font-size: 12px;
+}
+.tool-iframe {
+  width: 100%;
+  height: 760px;
+  border: 0;
+  display: block;
+  background: #f8fafc;
+}
+@media (max-width: 600px) {
+  .tool-iframe { height: 620px; }
+}
