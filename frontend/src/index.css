@@ -228,3 +228,163 @@ button.small { padding: 4px 10px; font-size: 12px; }
 .data-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* スライダー下のヘルパー */
+.slider-helper {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* 入力ヒント */
+.hints {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.hints-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.hints ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.hints li {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+/* セカンダリボタン */
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+button.secondary:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+/* モーダル */
+.modal-back {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+.modal {
+  background: var(--panel);
+  padding: 20px 22px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: min(420px, 90vw);
+}
+.modal h3 {
+  margin: 0 0 6px;
+}
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.text-input {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+.print-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: grid;
+  gap: 6px;
+}
+.print-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.print-list input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+/* タイトル編集 */
+.title-edit {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 18px;
+  width: 280px;
+}
+
+/* 管理者バッジ */
+.admin-badge {
+  background: #7c3aed;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-group {
+  margin-top: 24px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.admin-user-id {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.admin-user-id code {
+  background: #0f172a;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.badge {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--border);
+  font-size: 11px;
+}
+
+/* 印刷用 */
+.print-only { display: none; }
+@media print {
+  body { background: white !important; color: black !important; }
+  .container { max-width: none; padding: 12px; }
+  .no-print, .screen-only { display: none !important; }
+  .print-only { display: block !important; }
+  .print-sheets { background: white; }
+  .print-section { page-break-inside: avoid; margin-bottom: 24px; }
+  .print-section h3 { color: black; }
+  .results { background: white !important; border: none !important; color: black !important; }
+  .kpi-grid { color: black; }
+  .kpi { background: #f8fafc !important; border-color: #cbd5e1 !important; }
+  .kpi strong { color: black; }
+  .data-table thead { background: #e2e8f0 !important; }
+  .data-table td, .data-table th { color: black; border-color: #cbd5e1 !important; }
+  .table-wrap { background: white !important; border-color: #cbd5e1 !important; }
+  .muted { color: #475569 !important; }
+}

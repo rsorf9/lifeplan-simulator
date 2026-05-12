@@ -72,6 +72,18 @@
     "requires": "has_spouse"
   },
   {
+    "key": "house_purchase_age",
+    "label": "住宅購入時の年齢",
+    "group": "housing",
+    "unit": "歳",
+    "min": 18,
+    "max": 80,
+    "step": 1,
+    "default": 35,
+    "tooltip": "現在年齢と同じなら即購入。将来の年齢にすると、購入年度から頭金とローンが発生",
+    "valueType": "integer"
+  },
+  {
     "key": "house_price",
     "label": "住宅購入金額",
     "group": "housing",
@@ -160,6 +172,7 @@
     "max": 100,
     "step": 1,
     "default": 8,
+    "tooltip": "余剰金（差額）から配分。投資との合計が月間余剰を超えないように自動調整",
     "valueType": "integer"
   },
   {
@@ -183,6 +196,7 @@
     "max": 100,
     "step": 1,
     "default": 5,
+    "tooltip": "余剰金（差額）から配分。貯蓄との合計が月間余剰を超えないように自動調整",
     "valueType": "integer"
   },
   {
