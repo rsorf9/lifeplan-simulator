@@ -369,26 +369,6 @@ button.secondary:hover {
   font-size: 11px;
 }
 
-/* 印刷用 */
-.print-only { display: none; }
-@media print {
-  body { background: white !important; color: black !important; }
-  .container { max-width: none; padding: 12px; }
-  .no-print, .screen-only { display: none !important; }
-  .print-only { display: block !important; }
-  .print-sheets { background: white; }
-  .print-section { page-break-inside: avoid; margin-bottom: 24px; }
-  .print-section h3 { color: black; }
-  .results { background: white !important; border: none !important; color: black !important; }
-  .kpi-grid { color: black; }
-  .kpi { background: #f8fafc !important; border-color: #cbd5e1 !important; }
-  .kpi strong { color: black; }
-  .data-table thead { background: #e2e8f0 !important; }
-  .data-table td, .data-table th { color: black; border-color: #cbd5e1 !important; }
-  .table-wrap { background: white !important; border-color: #cbd5e1 !important; }
-  .muted { color: #475569 !important; }
-}
-
 /* 管理者：アカウント作成セクション */
 .admin-card {
   background: var(--panel);
@@ -504,4 +484,123 @@ button:disabled {
 }
 @media (max-width: 600px) {
   .tool-iframe { height: 620px; }
+}
+
+/* ============================================================ */
+/* 印刷スタイル                                                   */
+/* ============================================================ */
+.print-only { display: none; }
+.print-cover-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.print-cover-toggle input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+@media print {
+  /* 横向き A4 で印刷 */
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  html, body { background: white !important; color: black !important; }
+  .container { max-width: none; padding: 0; margin: 0; }
+  .no-print, .screen-only { display: none !important; }
+  .print-only { display: block !important; }
+  .editor-layout { display: block !important; grid-template-columns: none !important; }
+
+  .print-sheets { background: white; }
+
+  /* 1 シミュレーション = 1 ページ */
+  .print-cover { page-break-after: always; break-after: page; }
+  .print-section {
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0;
+    padding: 0;
+  }
+  .print-section:last-child { page-break-after: auto; break-after: auto; }
+
+  /* 表紙 */
+  .print-cover {
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .print-cover-inner h1 {
+    font-size: 32px;
+    margin: 0 0 24px;
+    color: #1e293b;
+    letter-spacing: 0.05em;
+  }
+  .print-cover-inner h2 {
+    font-size: 22px;
+    margin: 0 0 16px;
+    color: #475569;
+    font-weight: 500;
+  }
+  .print-cover-date { color: #64748b; font-size: 14px; }
+
+  /* 各セクションのヘッダー */
+  .print-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  .print-section-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #1e293b;
+  }
+  .print-scenario-name {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  /* グラフ：印刷時の色を確実に */
+  .print-section svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  .recharts-wrapper, .recharts-surface {
+    overflow: visible !important;
+  }
+
+  /* テーブル */
+  .data-table thead { background: #e2e8f0 !important; }
+  .data-table td, .data-table th { color: black; border-color: #cbd5e1 !important; }
+  .table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+    background: white !important;
+    border-color: #cbd5e1 !important;
+  }
+  .muted { color: #475569 !important; }
+
+  /* 画面 UI を完全に隠す */
+  .header, .auth-wrap, .group-tabs, .chart-tabs, .hints, .sliders, .modal-back {
+    display: none !important;
+  }
+
+  /* 色付きキーワードのプリント時可視性 */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }

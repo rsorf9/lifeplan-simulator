@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   ComposedChart,
   Bar,
   XAxis,
@@ -73,6 +75,10 @@ function formatYenShort(v: number): string {
   return v.toLocaleString();
 }
 
+// 印刷用の固定サイズ（横向きA4 ≈ 1100x700 描画領域）
+const PRINT_W = 980;
+const PRINT_H = 460;
+
 export function ScenarioEditorPage() {
   const { id } = useParams<{ id: string }>();
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -87,6 +93,7 @@ export function ScenarioEditorPage() {
   const [renaming, setRenaming] = useState(false);
   const [tmpName, setTmpName] = useState('');
   const [printOpen, setPrintOpen] = useState(false);
+  const [printCoverEnabled, setPrintCoverEnabled] = useState(true);
   const [printSelection, setPrintSelection] = useState<Record<ChartTab, boolean>>({
     asset: true,
     'cashflow-chart': true,
@@ -113,7 +120,7 @@ export function ScenarioEditorPage() {
   }, [id]);
 
   const result = useMemo(() => simulate(inputs, extra), [inputs, extra]);
-  const monthlyAllocMax = result.summary.monthly_alloc_max_year0; // 万円/月
+  const monthlyAllocMax = result.summary.monthly_alloc_max_year0;
 
   const save = async () => {
     if (!scenario) return;
@@ -173,6 +180,8 @@ export function ScenarioEditorPage() {
     setPrintOpen(false);
     setTimeout(() => window.print(), 100);
   };
+
+  const selectedTabs = CHART_TABS.filter((t) => printSelection[t.key]);
 
   return (
     <div className="container">
@@ -303,8 +312,9 @@ export function ScenarioEditorPage() {
             ))}
           </nav>
 
+          {/* 画面表示用：レスポンシブ */}
           <div className="chart-area screen-only">
-            <ChartView
+            <ScreenChartView
               tab={activeChart}
               rows={result.rows}
               hasSpouse={!!extra.has_spouse}
@@ -313,13 +323,26 @@ export function ScenarioEditorPage() {
             />
           </div>
 
-          {/* 印刷用：選択タブを縦に並べる */}
+          {/* 印刷用：表紙＋各シミュレーションを1ページずつ */}
           <div className="print-only print-sheets">
-            <h2>{scenario.name} - シミュレーション結果</h2>
-            {CHART_TABS.filter((t) => printSelection[t.key]).map((t) => (
+            {printCoverEnabled && (
+              <div className="print-cover">
+                <div className="print-cover-inner">
+                  <h1>ライフプランシミュレーション（概算）</h1>
+                  <h2>{scenario.name}</h2>
+                  <p className="print-cover-date">
+                    出力日：{new Date().toLocaleDateString('ja-JP')}
+                  </p>
+                </div>
+              </div>
+            )}
+            {selectedTabs.map((t) => (
               <div key={t.key} className="print-section">
-                <h3>{t.label}</h3>
-                <ChartView
+                <div className="print-section-header">
+                  <h2>{t.label}</h2>
+                  <span className="print-scenario-name">{scenario.name}</span>
+                </div>
+                <PrintChartView
                   tab={t.key}
                   rows={result.rows}
                   hasSpouse={!!extra.has_spouse}
@@ -336,6 +359,14 @@ export function ScenarioEditorPage() {
         <div className="modal-back" onClick={() => setPrintOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>印刷する項目を選択</h3>
+            <label className="print-cover-toggle">
+              <input
+                type="checkbox"
+                checked={printCoverEnabled}
+                onChange={(e) => setPrintCoverEnabled(e.target.checked)}
+              />
+              表紙を含める（ライフプランシミュレーション 概算）
+            </label>
             <ul className="print-list">
               {CHART_TABS.map((t) => (
                 <li key={t.key}>
@@ -350,6 +381,9 @@ export function ScenarioEditorPage() {
                 </li>
               ))}
             </ul>
+            <p className="muted small">
+              ※ 1 シミュレーション 1 ページで横向き印刷されます。ブラウザの印刷ダイアログで「横」を選択してください。
+            </p>
             <div className="modal-actions">
               <button className="secondary" onClick={() => setPrintOpen(false)}>キャンセル</button>
               <button onClick={doPrint}>印刷する</button>
@@ -370,7 +404,8 @@ function Kpi({ label, value, danger }: { label: string; value: string; danger?: 
   );
 }
 
-function ChartView({
+// 画面表示用（ResponsiveContainer）
+function ScreenChartView({
   tab,
   rows,
   hasSpouse,
@@ -385,26 +420,35 @@ function ChartView({
 }) {
   if (tab === 'asset') {
     return (
-      <ResponsiveContainer width="100%" height={360}>
-        <LineChart data={rows} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={380}>
+        <AreaChart data={rows} margin={{ top: 36, right: 30, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="age" />
           <YAxis tickFormatter={formatYenShort} width={70} />
           <Tooltip formatter={(v: number) => yen(v)} />
           <Legend />
-          <ReferenceLine x={PENSION_START_AGE} stroke="#94a3b8" strokeDasharray="3 3" label={{ value: '年金開始', position: 'top', fill: '#94a3b8', fontSize: 11 }} />
-          <ReferenceLine x={purchaseAge} stroke="#a78bfa" strokeDasharray="3 3" label={{ value: '住宅購入', position: 'top', fill: '#a78bfa', fontSize: 11 }} />
-          <Line type="monotone" dataKey="investment" name="投資" stroke="#16a34a" dot={false} strokeWidth={2} />
-          <Line type="monotone" dataKey="savings" name="貯蓄" stroke="#f59e0b" dot={false} strokeWidth={2} />
-          <Line type="monotone" dataKey="loan_balance" name="ローン残高" stroke="#dc2626" dot={false} strokeWidth={2} />
-        </LineChart>
+          <ReferenceLine
+            x={PENSION_START_AGE}
+            stroke="#94a3b8"
+            strokeDasharray="3 3"
+            label={{ value: '年金開始', position: 'insideTop', fill: '#94a3b8', fontSize: 11, offset: 6 }}
+          />
+          <ReferenceLine
+            x={purchaseAge}
+            stroke="#a78bfa"
+            strokeDasharray="3 3"
+            label={{ value: '住宅購入', position: 'insideTop', fill: '#a78bfa', fontSize: 11, offset: 22 }}
+          />
+          <Area type="monotone" dataKey="savings" name="貯蓄" stackId="assets" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.55} />
+          <Area type="monotone" dataKey="investment" name="投資" stackId="assets" stroke="#16a34a" fill="#16a34a" fillOpacity={0.55} />
+        </AreaChart>
       </ResponsiveContainer>
     );
   }
   if (tab === 'cashflow-chart') {
     return (
-      <ResponsiveContainer width="100%" height={360}>
-        <ComposedChart data={rows} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={380}>
+        <ComposedChart data={rows} margin={{ top: 30, right: 20, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="age" />
           <YAxis tickFormatter={formatYenShort} width={70} />
@@ -426,18 +470,87 @@ function ChartView({
   if (tab === 'cashflow-table') return <CashflowTable rows={rows} hasSpouse={hasSpouse} />;
   if (tab === 'loan-chart') {
     return (
-      <ResponsiveContainer width="100%" height={360}>
-        <LineChart data={rows} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={380}>
+        <LineChart data={rows} margin={{ top: 30, right: 20, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="age" />
           <YAxis tickFormatter={formatYenShort} width={70} />
           <Tooltip formatter={(v: number) => yen(v)} />
           <Legend />
-          <ReferenceLine x={purchaseAge} stroke="#a78bfa" strokeDasharray="3 3" label={{ value: '購入', position: 'top', fill: '#a78bfa', fontSize: 11 }} />
+          <ReferenceLine
+            x={purchaseAge}
+            stroke="#a78bfa"
+            strokeDasharray="3 3"
+            label={{ value: '購入', position: 'insideTop', fill: '#a78bfa', fontSize: 11, offset: 8 }}
+          />
           <Line type="monotone" dataKey="loan_balance" name="ローン残高" stroke="#dc2626" strokeWidth={2} dot={false} />
           <Line type="monotone" dataKey="loan_payment" name="年間返済額" stroke="#f97316" dot={false} />
         </LineChart>
       </ResponsiveContainer>
+    );
+  }
+  return <LoanTable rows={rows} monthlyPayment={monthlyPayment} />;
+}
+
+// 印刷用：固定サイズ Recharts（ResponsiveContainer なし）
+function PrintChartView({
+  tab,
+  rows,
+  hasSpouse,
+  monthlyPayment,
+  purchaseAge,
+}: {
+  tab: ChartTab;
+  rows: YearRow[];
+  hasSpouse: boolean;
+  monthlyPayment: number;
+  purchaseAge: number;
+}) {
+  if (tab === 'asset') {
+    return (
+      <AreaChart width={PRINT_W} height={PRINT_H} data={rows} margin={{ top: 40, right: 30, left: 10, bottom: 10 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="age" />
+        <YAxis tickFormatter={formatYenShort} width={80} />
+        <Legend />
+        <ReferenceLine x={PENSION_START_AGE} stroke="#94a3b8" strokeDasharray="3 3" label={{ value: '年金開始', position: 'insideTop', fill: '#475569', fontSize: 12, offset: 8 }} />
+        <ReferenceLine x={purchaseAge} stroke="#a78bfa" strokeDasharray="3 3" label={{ value: '住宅購入', position: 'insideTop', fill: '#7c3aed', fontSize: 12, offset: 26 }} />
+        <Area type="monotone" dataKey="savings" name="貯蓄" stackId="assets" stroke="#f59e0b" fill="#fbbf24" fillOpacity={0.55} />
+        <Area type="monotone" dataKey="investment" name="投資" stackId="assets" stroke="#16a34a" fill="#4ade80" fillOpacity={0.55} />
+      </AreaChart>
+    );
+  }
+  if (tab === 'cashflow-chart') {
+    return (
+      <ComposedChart width={PRINT_W} height={PRINT_H} data={rows} margin={{ top: 30, right: 30, left: 10, bottom: 10 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="age" />
+        <YAxis tickFormatter={formatYenShort} width={80} />
+        <Legend />
+        <ReferenceLine x={PENSION_START_AGE} stroke="#94a3b8" strokeDasharray="3 3" />
+        <Bar dataKey="own_salary" name="給与（本人）" stackId="inc" fill="#16a34a" />
+        {hasSpouse && <Bar dataKey="spouse_salary" name="給与（配偶者）" stackId="inc" fill="#65a30d" />}
+        <Bar dataKey="own_pension" name="年金（本人）" stackId="inc" fill="#22d3ee" />
+        {hasSpouse && <Bar dataKey="spouse_pension" name="年金（配偶者）" stackId="inc" fill="#0ea5e9" />}
+        <Bar dataKey="living_expense" name="生活費" stackId="exp" fill="#94a3b8" />
+        <Bar dataKey="loan_payment" name="ローン返済" stackId="exp" fill="#dc2626" />
+        <Bar dataKey="education_expense" name="教育費" stackId="exp" fill="#a855f7" />
+        <Line type="monotone" dataKey="cashflow" name="差額" stroke="#2563eb" strokeWidth={2} dot={false} />
+      </ComposedChart>
+    );
+  }
+  if (tab === 'cashflow-table') return <CashflowTable rows={rows} hasSpouse={hasSpouse} />;
+  if (tab === 'loan-chart') {
+    return (
+      <LineChart width={PRINT_W} height={PRINT_H} data={rows} margin={{ top: 30, right: 30, left: 10, bottom: 10 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="age" />
+        <YAxis tickFormatter={formatYenShort} width={80} />
+        <Legend />
+        <ReferenceLine x={purchaseAge} stroke="#a78bfa" strokeDasharray="3 3" label={{ value: '購入', position: 'insideTop', fill: '#7c3aed', fontSize: 12, offset: 10 }} />
+        <Line type="monotone" dataKey="loan_balance" name="ローン残高" stroke="#dc2626" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="loan_payment" name="年間返済額" stroke="#f97316" dot={false} />
+      </LineChart>
     );
   }
   return <LoanTable rows={rows} monthlyPayment={monthlyPayment} />;

@@ -29,6 +29,19 @@ h1 { font-size: 19px; margin: 0 0 4px; line-height: 1.3; }
   width: 90px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; text-align: right;
 }
 .field-unit { font-size: 11px; color: #64748b; margin-left: 4px; }
+.cost-calc-btn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.cost-calc-btn:hover { background: #e2e8f0; }
 .calc-button {
   width: 100%; padding: 14px; background: #2563eb; color: white; border: 0;
   border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer;
@@ -58,10 +71,73 @@ h1 { font-size: 19px; margin: 0 0 4px; line-height: 1.3; }
 .win-rent { color: #2563eb; font-weight: 700; }
 canvas { max-width: 100%; }
 footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4px; }
+
+/* モーダル */
+.modal-back {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+}
+.modal-back.open { display: flex; }
+.cost-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 18px 20px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  margin: auto;
+}
+.cost-modal h3 { margin: 0 0 4px; font-size: 16px; }
+.cost-modal .modal-note { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+.cost-list { display: grid; gap: 8px; max-height: 60vh; overflow-y: auto; padding-right: 6px; }
+.cost-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.cost-item-info label { font-size: 13px; font-weight: 600; }
+.cost-item-info .hint { font-size: 11px; color: #64748b; display: block; margin-top: 2px; }
+.cost-item-input { display: flex; align-items: center; gap: 4px; }
+.cost-item-input input {
+  width: 80px; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; text-align: right;
+}
+.cost-item-input .unit { font-size: 11px; color: #64748b; }
+.cost-summary {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid #93c5fd;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cost-summary strong { font-size: 18px; color: #1e40af; }
+.modal-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+.modal-actions button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.modal-actions .secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+.modal-actions .primary { background: #2563eb; color: white; font-weight: 600; }
+
 @media (max-width: 480px) {
   body { padding: 10px; }
   .summary-box { grid-template-columns: 1fr; }
   h1 { font-size: 17px; }
+  .cost-modal { padding: 14px 16px; }
 }
 </style>
 </head>
@@ -75,7 +151,10 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
   <div class="section">
     <h2>📝 賃貸の条件</h2>
     <div class="field"><div class="field-row"><label>家賃（月額）</label><div><input type="number" id="rent" value="10" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
-    <div class="field"><div class="field-row"><label>初期費用（敷金礼金等）</label><div><input type="number" id="initRent" value="30" min="0" step="1"><span class="field-unit">万円</span></div></div></div>
+    <div class="field">
+      <div class="field-row"><label>初期費用（敷金礼金等）</label><div><input type="number" id="initRent" value="30" min="0" step="1"><span class="field-unit">万円</span></div></div>
+      <button class="cost-calc-btn" onclick="openRentalCalc()">📋 初期費用の概算を計算する</button>
+    </div>
     <div class="field"><div class="field-row"><label>更新料（2年毎）</label><div><input type="number" id="renewal" value="1" min="0" step="0.5"><span class="field-unit">ヶ月分</span></div></div></div>
     <div class="field"><div class="field-row"><label>引越し費用（次回移動時）</label><div><input type="number" id="moving" value="20" min="0" step="1"><span class="field-unit">万円</span></div></div></div>
   </div>
@@ -84,6 +163,10 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     <h2>🏘️ 購入の条件</h2>
     <div class="field"><div class="field-row"><label>物件価格</label><div><input type="number" id="price" value="4000" min="0" step="50"><span class="field-unit">万円</span></div></div></div>
     <div class="field"><div class="field-row"><label>頭金</label><div><input type="number" id="down" value="1000" min="0" step="50"><span class="field-unit">万円</span></div></div></div>
+    <div class="field">
+      <div class="field-row"><label>諸経費（仲介・登記・税金等）</label><div><input type="number" id="initBuy" value="" min="0" step="10" placeholder="物件価格×7%"><span class="field-unit">万円</span></div></div>
+      <button class="cost-calc-btn" onclick="openPurchaseCalc()">📋 諸経費の概算を計算する</button>
+    </div>
     <div class="field"><div class="field-row"><label>借入期間</label><div><input type="number" id="loanYears" value="35" min="1" step="1"><span class="field-unit">年</span></div></div></div>
     <div class="field"><div class="field-row"><label>金利（年率）</label><div><input type="number" id="rate" value="1.0" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
     <div class="field"><div class="field-row"><label>管理費＋修繕積立（月額）</label><div><input type="number" id="maint" value="2" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
@@ -106,7 +189,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
         <div class="sub-val" id="rentMonthly">—</div>
       </div>
       <div class="summary-card buy">
-        <div class="lbl">購入の実質負担</div>
+        <div class="lbl">購入の総支払</div>
         <div class="val" id="buyTotal">—</div>
         <div class="sub">月キャッシュアウト</div>
         <div class="sub-val" id="buyMonthly">—</div>
@@ -128,12 +211,76 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     </div>
   </div>
 
-  <footer>※ 簡易計算です。物件価値は購入時のまま据え置きで試算しています。住宅ローン控除・固定資産税・修繕実費等は反映されません。詳細は FP にご相談を。</footer>
+  <footer>※ 簡易計算です。物件価値の変動・住宅ローン控除・固定資産税・修繕実費等は含みません。詳細は FP にご相談を。</footer>
+</div>
+
+<!-- 賃貸初期費用モーダル -->
+<div id="rentalModal" class="modal-back">
+  <div class="cost-modal">
+    <h3>賃貸の初期費用 内訳</h3>
+    <p class="modal-note">家賃を基準に概算しています。各項目は自由に調整できます。</p>
+    <div class="cost-list" id="rentalCostList"></div>
+    <div class="cost-summary">合計 <strong id="rentalSum">— 万円</strong></div>
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeModal('rentalModal')">キャンセル</button>
+      <button class="primary" onclick="applyRentalCalc()">この合計を反映</button>
+    </div>
+  </div>
+</div>
+
+<!-- 購入諸経費モーダル -->
+<div id="purchaseModal" class="modal-back">
+  <div class="cost-modal">
+    <h3>購入の諸経費 内訳</h3>
+    <p class="modal-note">物件価格を基準に概算しています。各項目は自由に調整できます。</p>
+    <div class="cost-list" id="purchaseCostList"></div>
+    <div class="cost-summary">合計 <strong id="purchaseSum">— 万円</strong></div>
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeModal('purchaseModal')">キャンセル</button>
+      <button class="primary" onclick="applyPurchaseCalc()">この合計を反映</button>
+    </div>
+  </div>
 </div>
 
 <script>
-const KEY = "rentVsBuyV2";
-const FIELDS = ["rent","initRent","renewal","moving","price","down","loanYears","rate","maint","period"];
+const KEY = "rentVsBuyV3";
+const FIELDS = ["rent","initRent","renewal","moving","price","down","initBuy","loanYears","rate","maint","period"];
+
+// 賃貸初期費用の項目定義
+const RENTAL_ITEMS = [
+  { id: "shikikin",   label: "敷金",                hint: "家賃×1ヶ月分が目安（退去時の保証金）",  factor: r => r * 1 },
+  { id: "reikin",     label: "礼金",                hint: "家賃×0〜2ヶ月分（大家への謝礼）",       factor: r => r * 1 },
+  { id: "mae_yachin", label: "前家賃・日割り家賃",  hint: "家賃×1ヶ月+入居日からの日割り",          factor: r => r * 1 },
+  { id: "chukai",     label: "仲介手数料",          hint: "家賃×1ヶ月+消費税が上限",                factor: r => r * 1.1 },
+  { id: "hosho",      label: "保証会社利用料",      hint: "家賃×0.5〜1ヶ月分（初回保証料）",        factor: r => r * 0.5 },
+  { id: "kasai",      label: "火災保険料",          hint: "1〜2年分で1.5〜2万円が一般的",           value: 2 },
+  { id: "kagi",       label: "鍵交換費用",          hint: "1.5〜2万円が目安",                       value: 2 },
+  { id: "clean",      label: "クリーニング費用",    hint: "敷金ゼロ物件で前払い請求あり",            value: 0 },
+  { id: "jimu",       label: "事務手数料",          hint: "不動産会社が取る場合あり",                value: 0 },
+  { id: "mae_kanrihi",label: "前払い管理費・共益費",hint: "別途ある場合の前払い分",                  value: 0 },
+  { id: "parking",    label: "駐車場契約費用",      hint: "駐車場利用時の契約料",                    value: 0 },
+  { id: "rentai",     label: "連帯保証人代行費用",  hint: "保証人なしの場合",                        value: 0 },
+  { id: "kazai",      label: "家財保険",            hint: "任意加入の場合",                          value: 0 },
+  { id: "lifeline",   label: "ライフライン初期費用",hint: "電気・ガス・水道の開栓",                  value: 1 },
+];
+
+// 購入諸経費の項目定義（物件価格と頭金を基準に算出）
+const PURCHASE_ITEMS = [
+  { id: "tetsuke",  label: "手付金",              hint: "契約時の前払金（後で頭金に充当）",          value: 0 },
+  { id: "chukai_p", label: "仲介手数料",          hint: "物件価格×3%+6万円+消費税",                  factor: (p,d) => (p * 0.03 + 6) * 1.1 },
+  { id: "toki",     label: "登記費用",            hint: "司法書士報酬+登録免許税",                    value: 30 },
+  { id: "yuushi",   label: "融資手数料",          hint: "金融機関による（定額or借入額の数%）",         value: 5 },
+  { id: "hosho_p",  label: "保証料",              hint: "借入額×2%程度（一括前払の場合）",            factor: (p,d) => Math.max(0, (p - d)) * 0.02 },
+  { id: "dan_shin", label: "団信保険料",          hint: "ローンに内包される場合多い",                  value: 0 },
+  { id: "inshi",    label: "印紙税",              hint: "売買契約書1〜3万円",                          value: 3 },
+  { id: "shutoku",  label: "不動産取得税",        hint: "物件評価額×3%（後日納付）",                   factor: (p,d) => p * 0.7 * 0.03 },
+  { id: "koto",     label: "固定資産税・都市計画税の精算金", hint: "前所有者分の精算",            value: 10 },
+  { id: "kasai_p",  label: "火災・地震保険料",    hint: "ローン組成時に必要、初回一括",                value: 15 },
+  { id: "inspect",  label: "建物診断・測量費用",  hint: "中古物件などで任意",                          value: 0 },
+  { id: "hikkoshi", label: "引越し代",            hint: "家族構成・距離による",                        value: 15 },
+  { id: "kagu",     label: "家具・家電・カーテン",hint: "新居用の購入費用",                            value: 50 },
+  { id: "lifeline_p",label:"ライフライン初期費用",hint: "電気・ガス開栓・契約手数料",                  value: 3 },
+];
 
 function getNum(id, fallback) {
   const el = document.getElementById(id);
@@ -157,7 +304,7 @@ function saveAll() {
 }
 restore();
 for (const f of FIELDS) {
-  document.getElementById(f).addEventListener("change", saveAll);
+  document.getElementById(f).addEventListener("change", () => { saveAll(); calculate(); });
 }
 
 const fmtMan = (v) => `${Math.round(v).toLocaleString()} 万円`;
@@ -186,6 +333,10 @@ function calculate() {
   const maint     = getNum("maint", 2);
   const period    = Math.max(1, getNum("period", 10));
 
+  // 諸経費：手動入力があればそれを使い、なければ 物件価格×7%
+  const initBuyInput = parseFloat(document.getElementById("initBuy").value);
+  const initBuyFees = Number.isFinite(initBuyInput) && initBuyInput >= 0 ? initBuyInput : price * 0.07;
+
   // 賃貸計算（すべて万円）
   const renewalsCount = Math.max(0, Math.floor(period / 2));
   const movesCount    = Math.max(0, renewalsCount - 1);
@@ -195,16 +346,15 @@ function calculate() {
   const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal + rentMovingTotal;
   const rentMonthlyAvg = rentTotal / period / 12;
 
-  // 購入計算（物件価値は購入価格のまま据え置き）
-  const initBuyFees = price * 0.07; // 諸経費 7%
+  // 購入計算（物件価値の変動は考慮しない＝純粋な支出比較）
   const loanPrincipalYen = Math.max(price - down, 0) * 10000;
   const mPayYen = monthlyPayment(loanPrincipalYen, rate, loanYears);
   const monthsInPeriod = Math.min(period * 12, loanYears * 12);
   const loanPaidMan = (mPayYen * monthsInPeriod) / 10000;
   const maintTotal = maint * 12 * period;
-  const residual = price; // 物件価値は据え置き
-  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal - residual;
+  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal;
   const buyCashMonthlyMan = (mPayYen / 10000) + maint;
+  const buyMonthlyAvg = buyTotal / period / 12;
 
   // 表示
   document.getElementById("results").style.display = "block";
@@ -213,15 +363,15 @@ function calculate() {
   document.getElementById("buyTotal").textContent = fmtMan(buyTotal);
   document.getElementById("buyMonthly").textContent = `${buyCashMonthlyMan.toFixed(1)} 万円`;
 
-  // 評価
+  // 判定
   const diff = buyTotal - rentTotal;
   const verdict = document.getElementById("verdict");
   if (diff < 0) {
     verdict.className = "verdict buy";
-    verdict.innerHTML = `🟢 ${period} 年で見ると <b>購入が ${fmtMan(Math.abs(diff))} お得</b>`;
+    verdict.innerHTML = `🟢 ${period} 年で見ると <b>購入が ${fmtMan(Math.abs(diff))} 安い</b>`;
   } else if (diff > 0) {
     verdict.className = "verdict rent";
-    verdict.innerHTML = `🔵 ${period} 年で見ると <b>賃貸が ${fmtMan(Math.abs(diff))} お得</b>`;
+    verdict.innerHTML = `🔵 ${period} 年で見ると <b>賃貸が ${fmtMan(Math.abs(diff))} 安い</b>`;
   } else {
     verdict.className = "verdict rent";
     verdict.innerHTML = `⚖️ ${period} 年で見るとほぼ同じ`;
@@ -233,7 +383,6 @@ function calculate() {
     ["家賃 / ローン返済（期間中）",    rentMonthlyTotal,    loanPaidMan],
     ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
-    ["売却想定額（マイナス＝資産）",  0,                   -residual],
   ];
   let html = "";
   for (const r of rows) {
@@ -264,7 +413,7 @@ function calculate() {
       responsive: true,
       plugins: {
         legend: { display: false },
-        title: { display: true, text: `${period}年での実質負担比較（万円）` },
+        title: { display: true, text: `${period}年での総支出比較（万円）` },
       },
       scales: { y: { beginAtZero: true } },
     },
@@ -288,6 +437,68 @@ function calculate() {
       scales: { y: { beginAtZero: true } },
     },
   });
+}
+
+// ===== モーダル制御 =====
+function openModal(id)  { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function renderCostList(containerId, items, basis) {
+  const html = items.map(item => {
+    const def = item.factor ? item.factor.apply(null, basis) : item.value;
+    const rounded = Math.round(def * 10) / 10;
+    return `
+      <div class="cost-item">
+        <div class="cost-item-info">
+          <label>${item.label}</label>
+          <span class="hint">${item.hint}</span>
+        </div>
+        <div class="cost-item-input">
+          <input type="number" id="ci_${item.id}" value="${rounded}" min="0" step="0.5" oninput="updateCostSum('${containerId}', ${JSON.stringify(items.map(i => 'ci_'+i.id))}, '${containerId === 'rentalCostList' ? 'rentalSum' : 'purchaseSum'}')">
+          <span class="unit">万円</span>
+        </div>
+      </div>`;
+  }).join("");
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function updateCostSum(containerId, ids, sumElId) {
+  let sum = 0;
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    sum += (parseFloat(el?.value) || 0);
+  }
+  document.getElementById(sumElId).textContent = `${sum.toFixed(1)} 万円`;
+  return sum;
+}
+
+function openRentalCalc() {
+  const rent = getNum("rent", 10);
+  renderCostList("rentalCostList", RENTAL_ITEMS, [rent]);
+  updateCostSum("rentalCostList", RENTAL_ITEMS.map(i => "ci_" + i.id), "rentalSum");
+  openModal("rentalModal");
+}
+
+function applyRentalCalc() {
+  const sum = updateCostSum("rentalCostList", RENTAL_ITEMS.map(i => "ci_" + i.id), "rentalSum");
+  document.getElementById("initRent").value = sum.toFixed(1);
+  closeModal("rentalModal");
+  calculate();
+}
+
+function openPurchaseCalc() {
+  const price = getNum("price", 4000);
+  const down = getNum("down", 1000);
+  renderCostList("purchaseCostList", PURCHASE_ITEMS, [price, down]);
+  updateCostSum("purchaseCostList", PURCHASE_ITEMS.map(i => "ci_" + i.id), "purchaseSum");
+  openModal("purchaseModal");
+}
+
+function applyPurchaseCalc() {
+  const sum = updateCostSum("purchaseCostList", PURCHASE_ITEMS.map(i => "ci_" + i.id), "purchaseSum");
+  document.getElementById("initBuy").value = sum.toFixed(1);
+  closeModal("purchaseModal");
+  calculate();
 }
 
 // 初回自動計算
