@@ -72,6 +72,19 @@
     "requires": "has_spouse"
   },
   {
+    "key": "monthly_rent",
+    "label": "月々の家賃",
+    "group": "housing",
+    "unit": "万円",
+    "min": 0,
+    "max": 50,
+    "step": 0.5,
+    "default": 10,
+    "tooltip": "賃貸継続にチェックを入れた場合に住宅費として反映（管理費・共益費込み）",
+    "valueType": "float",
+    "requires": "is_renter"
+  },
+  {
     "key": "house_purchase_age",
     "label": "住宅購入時の年齢",
     "group": "housing",
@@ -81,7 +94,8 @@
     "step": 1,
     "default": 35,
     "tooltip": "現在年齢と同じなら即購入。将来の年齢にすると、購入年度から頭金とローンが発生",
-    "valueType": "integer"
+    "valueType": "integer",
+    "requires": "is_buyer"
   },
   {
     "key": "house_price",
@@ -93,7 +107,8 @@
     "step": 100,
     "default": 4500,
     "tooltip": "土地+建物の合計金額",
-    "valueType": "integer"
+    "valueType": "integer",
+    "requires": "is_buyer"
   },
   {
     "key": "down_payment",
@@ -104,7 +119,8 @@
     "max": 10000,
     "step": 50,
     "default": 500,
-    "valueType": "integer"
+    "valueType": "integer",
+    "requires": "is_buyer"
   },
   {
     "key": "interest_rate",
@@ -115,7 +131,8 @@
     "max": 5,
     "step": 0.05,
     "default": 1.2,
-    "valueType": "float"
+    "valueType": "float",
+    "requires": "is_buyer"
   },
   {
     "key": "loan_years",
@@ -126,7 +143,8 @@
     "max": 50,
     "step": 1,
     "default": 35,
-    "valueType": "integer"
+    "valueType": "integer",
+    "requires": "is_buyer"
   },
   {
     "key": "monthly_expense",
@@ -137,7 +155,7 @@
     "max": 100,
     "step": 1,
     "default": 22,
-    "tooltip": "食費・光熱費・通信・日用品など毎月発生する支出",
+    "tooltip": "食費・光熱費・通信・日用品など毎月発生する支出（家賃・住宅ローンは別計上）",
     "valueType": "integer"
   },
   {

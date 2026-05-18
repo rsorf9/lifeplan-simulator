@@ -12,6 +12,7 @@ export interface ChildInfo {
 
 export interface ScenarioExtraSettings {
   has_spouse?: boolean;
+  is_renter?: boolean;
   children?: ChildInfo[];
 }
 

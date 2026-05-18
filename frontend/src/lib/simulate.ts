@@ -123,6 +123,8 @@ export function simulate(
   const currentAge = inputs.current_age ?? 35;
   const retirementAge = inputs.retirement_age ?? 65;
   const hasSpouse = !!extra.has_spouse;
+  const isRenter = !!extra.is_renter;
+  const annualRent = (inputs.monthly_rent ?? 0) * 10000 * 12;
   const spouseAgeStart = inputs.spouse_age ?? currentAge;
   const spouseRetirementAge = inputs.spouse_retirement_age ?? retirementAge;
 
@@ -184,8 +186,9 @@ export function simulate(
   let savings = (inputs.current_savings ?? 0) * 10000;
   let investment = (inputs.current_investment ?? 0) * 10000;
   // 過去購入の場合：頭金は既に支払い済みのため貯蓄から減算しない。現時点の残高をローン残として保持
-  let loanBalance = yearsAlreadyPaid > 0 ? initialLoanBalance : 0;
-  let hasPurchased = yearsAlreadyPaid > 0; // 既に過去購入済みなら true
+  // 賃貸継続の場合：購入関連はすべて無効化
+  let loanBalance = !isRenter && yearsAlreadyPaid > 0 ? initialLoanBalance : 0;
+  let hasPurchased = !isRenter && yearsAlreadyPaid > 0; // 既に過去購入済みなら true
   const investRate = (inputs.expected_return ?? 0) / 100;
   const savingsRate = (inputs.savings_return ?? 0) / 100;
 
@@ -204,8 +207,8 @@ export function simulate(
     const age = currentAge + y;
     const sAge = hasSpouse ? spouseAgeStart + y : null;
 
-    // 住宅購入イベント（年初に処理）
-    if (!hasPurchased && y === purchaseYear) {
+    // 住宅購入イベント（年初に処理）- 賃貸継続時はスキップ
+    if (!isRenter && !hasPurchased && y === purchaseYear) {
       savings -= downPayment;
       loanBalance = loanPrincipal;
       hasPurchased = true;
@@ -227,11 +230,15 @@ export function simulate(
     const yearIncome = ownIncome + spIncome;
     totalPensionReceived += ownPension + spPension;
 
-    // ローン返済（購入済みかつ残高>0）
+    // 住居費（賃貸継続なら家賃×12、それ以外はローン返済）
     let yearlyLoanPay = 0;
     let yearlyInterest = 0;
     let yearlyPrincipal = 0;
-    if (hasPurchased && loanBalance > 0) {
+    if (isRenter) {
+      yearlyLoanPay = annualRent;
+      // 家賃は totalLoanPayment にも累計（住宅費合計として扱う）
+      totalLoanPayment += annualRent;
+    } else if (hasPurchased && loanBalance > 0) {
       const interest = loanBalance * annualRate;
       const principalCapacity = Math.max(annualLoanPayment - interest, 0);
       const principal = Math.min(principalCapacity, loanBalance);

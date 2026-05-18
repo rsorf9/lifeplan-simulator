@@ -148,6 +148,8 @@ export function ScenarioEditorPage() {
   const visibleSliders = SCHEMA.filter((s) => {
     if (s.group !== activeGroup) return false;
     if (s.requires === 'has_spouse' && !extra.has_spouse) return false;
+    if (s.requires === 'is_renter' && !extra.is_renter) return false;
+    if (s.requires === 'is_buyer' && extra.is_renter) return false;
     return true;
   });
 
@@ -240,6 +242,19 @@ export function ScenarioEditorPage() {
               hasSpouse={!!extra.has_spouse}
               onChange={(v) => setExtra((prev) => ({ ...prev, has_spouse: v }))}
             />
+          )}
+
+          {activeGroup === 'housing' && (
+            <label className="spouse-toggle">
+              <input
+                type="checkbox"
+                checked={!!extra.is_renter}
+                onChange={(e) =>
+                  setExtra((prev) => ({ ...prev, is_renter: e.target.checked }))
+                }
+              />
+              <span>賃貸継続（住宅は購入せず家賃を住宅費として計上）</span>
+            </label>
           )}
 
           {activeGroup === 'family' ? (
@@ -567,7 +582,7 @@ function CashflowTable({ rows, hasSpouse }: { rows: YearRow[]; hasSpouse: boolea
               <th>収入（本人）</th>
               <th>収入（配偶者）</th>
               <th>生活費</th>
-              <th>ローン</th>
+              <th>住宅費</th>
               <th>教育費</th>
               <th>差額</th>
               <th>投資残高</th>
@@ -579,7 +594,7 @@ function CashflowTable({ rows, hasSpouse }: { rows: YearRow[]; hasSpouse: boolea
               <th>給与</th>
               <th>年金</th>
               <th>生活費</th>
-              <th>ローン</th>
+              <th>住宅費</th>
               <th>教育費</th>
               <th>差額</th>
               <th>投資残高</th>
