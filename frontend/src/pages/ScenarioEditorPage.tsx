@@ -156,7 +156,10 @@ export function ScenarioEditorPage() {
   const monthlySavings = inputs.monthly_savings ?? 0;
   const monthlyInvest = inputs.monthly_investment ?? 0;
 
+  const manualAlloc = !!extra.manual_alloc;
+
   const sliderMaxOverride = (key: string): number | undefined => {
+    if (manualAlloc) return undefined; // 手動配分時は schema 上限をそのまま使用
     if (key === 'monthly_savings') {
       return Math.max(0, monthlyAllocMax - monthlyInvest);
     }
@@ -169,8 +172,13 @@ export function ScenarioEditorPage() {
   const sliderHelper = (key: string): string | undefined => {
     if (key === 'monthly_savings' || key === 'monthly_investment') {
       const used = monthlySavings + monthlyInvest;
-      const remain = Math.max(0, monthlyAllocMax - used);
-      return `月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　残り: ${remain.toFixed(1)} 万円`;
+      const remain = monthlyAllocMax - used;
+      if (manualAlloc) {
+        return remain >= 0
+          ? `手動配分中。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　残り: ${remain.toFixed(1)} 万円`
+          : `手動配分中。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　超過分 ${Math.abs(remain).toFixed(1)} 万円は貯蓄から取り崩し`;
+      }
+      return `月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　残り: ${Math.max(0, remain).toFixed(1)} 万円`;
     }
     return undefined;
   };
@@ -254,6 +262,19 @@ export function ScenarioEditorPage() {
                 }
               />
               <span>賃貸継続（住宅は購入せず家賃を住宅費として計上）</span>
+            </label>
+          )}
+
+          {(activeGroup === 'savings' || activeGroup === 'investment') && (
+            <label className="spouse-toggle">
+              <input
+                type="checkbox"
+                checked={!!extra.manual_alloc}
+                onChange={(e) =>
+                  setExtra((prev) => ({ ...prev, manual_alloc: e.target.checked }))
+                }
+              />
+              <span>手動配分モード（差額の上限制御を解除。超過分は貯蓄から取り崩し）</span>
             </label>
           )}
 

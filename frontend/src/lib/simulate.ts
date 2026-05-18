@@ -124,6 +124,7 @@ export function simulate(
   const retirementAge = inputs.retirement_age ?? 65;
   const hasSpouse = !!extra.has_spouse;
   const isRenter = !!extra.is_renter;
+  const manualAlloc = !!extra.manual_alloc;
   const annualRent = (inputs.monthly_rent ?? 0) * 10000 * 12;
   const spouseAgeStart = inputs.spouse_age ?? currentAge;
   const spouseRetirementAge = inputs.spouse_retirement_age ?? retirementAge;
@@ -261,11 +262,17 @@ export function simulate(
     const grossCashflow = yearIncome - totalExpense;
     minCashflow = Math.min(minCashflow, grossCashflow);
 
-    // 貯蓄・投資の配分（差額の範囲内に自動制限）
+    // 貯蓄・投資の配分
+    // 自動配分（既定）：差額の範囲内で貯蓄→投資の優先順位で自動制限
+    // 手動配分（manual_alloc=true）：入力値をそのまま拠出。不足分は貯蓄から取り崩し
     let actualSavingsContrib = 0;
     let actualInvestmentContrib = 0;
     let residual = grossCashflow;
-    if (grossCashflow > 0) {
+    if (manualAlloc) {
+      actualSavingsContrib = inputSavingsAnnual;
+      actualInvestmentContrib = inputInvestmentAnnual;
+      residual = grossCashflow - actualSavingsContrib - actualInvestmentContrib;
+    } else if (grossCashflow > 0) {
       actualSavingsContrib = Math.min(inputSavingsAnnual, grossCashflow);
       const remaining = grossCashflow - actualSavingsContrib;
       actualInvestmentContrib = Math.min(inputInvestmentAnnual, remaining);
