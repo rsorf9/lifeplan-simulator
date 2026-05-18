@@ -33,15 +33,23 @@ export function ChildrenManager({ children, onChange }: Props) {
           <li key={idx} className="child-row">
             <span className="child-no">#{idx + 1}</span>
             <label>
-              <span className="muted small">現在の年齢</span>
+              <span className="muted small">
+                現在の年齢
+                {c.age < 0 && (
+                  <span style={{ color: '#22d3ee', marginLeft: 4 }}>
+                    （{Math.abs(c.age)}年後に誕生予定）
+                  </span>
+                )}
+              </span>
               <input
                 type="number"
-                min={0}
+                min={-15}
                 max={25}
                 value={c.age}
-                onChange={(e) =>
-                  update(idx, { age: Math.max(0, Number(e.target.value)) })
-                }
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  update(idx, { age: Math.max(-15, Math.min(25, Number.isFinite(v) ? v : 0)) });
+                }}
               />
             </label>
             <label>
@@ -67,6 +75,8 @@ export function ChildrenManager({ children, onChange }: Props) {
       </ul>
       <p className="muted small">
         ※ 教育費は文部科学省「子供の学習費調査」を参考にした概算値です。
+        <br />
+        ※ 年齢にマイナス値を入力すると「将来の出生」を想定できます（例：-3 → 3 年後に誕生）。
       </p>
     </div>
   );
