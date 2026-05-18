@@ -156,7 +156,6 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
       <button class="cost-calc-btn" onclick="openRentalCalc()">📋 初期費用の概算を計算する</button>
     </div>
     <div class="field"><div class="field-row"><label>更新料（2年毎）</label><div><input type="number" id="renewal" value="1" min="0" step="0.5"><span class="field-unit">ヶ月分</span></div></div></div>
-    <div class="field"><div class="field-row"><label>引越し費用（次回移動時）</label><div><input type="number" id="moving" value="20" min="0" step="1"><span class="field-unit">万円</span></div></div></div>
   </div>
 
   <div class="section">
@@ -250,7 +249,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
 
 <script>
 const KEY = "rentVsBuyV3";
-const FIELDS = ["rent","initRent","renewal","moving","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
+const FIELDS = ["rent","initRent","renewal","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
 const CHECK_FIELDS = ["initBuyInLoan"];
 
 // 賃貸初期費用の項目定義
@@ -340,7 +339,6 @@ function calculate() {
   const rent      = getNum("rent", 10);
   const initRent  = getNum("initRent", 30);
   const renewal   = getNum("renewal", 1);
-  const moving    = getNum("moving", 20);
   const price     = getNum("price", 4000);
   const down      = getNum("down", 1000);
   const loanYears = Math.max(1, getNum("loanYears", 35));
@@ -360,11 +358,9 @@ function calculate() {
 
   // 賃貸計算（すべて万円）
   const renewalsCount = Math.max(0, Math.floor(period / 2));
-  const movesCount    = Math.max(0, renewalsCount - 1);
   const rentMonthlyTotal  = rent * 12 * period;
   const rentRenewalTotal  = rent * renewal * renewalsCount;
-  const rentMovingTotal   = moving * movesCount;
-  const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal + rentMovingTotal;
+  const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal;
   const rentMonthlyAvg = rentTotal / period / 12;
 
   // 購入計算（物件価値の変動は考慮しない＝純粋な支出比較）
@@ -411,7 +407,7 @@ function calculate() {
   const rows = [
     [buyInitLabel,                   initRent,            down + initBuyCash],
     [buyLoanLabel,                   rentMonthlyTotal,    loanPaidMan],
-    ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
+    ["更新料",                        rentRenewalTotal,    0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
     ["固定資産税（期間累計）",        0,                   propTaxTotal],
     ["火災保険料更新（期間累計）",    0,                   insRenewalTotal],

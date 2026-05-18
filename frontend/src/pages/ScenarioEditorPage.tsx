@@ -570,6 +570,7 @@ function CashflowTable({ rows, hasSpouse }: { rows: YearRow[]; hasSpouse: boolea
               <th>ローン</th>
               <th>教育費</th>
               <th>差額</th>
+              <th>投資残高</th>
               <th>貯蓄残高</th>
             </tr>
           ) : (
@@ -581,6 +582,7 @@ function CashflowTable({ rows, hasSpouse }: { rows: YearRow[]; hasSpouse: boolea
               <th>ローン</th>
               <th>教育費</th>
               <th>差額</th>
+              <th>投資残高</th>
               <th>貯蓄残高</th>
             </tr>
           )}
@@ -604,12 +606,13 @@ function CashflowTable({ rows, hasSpouse }: { rows: YearRow[]; hasSpouse: boolea
               <td className="num">{r.loan_payment.toLocaleString()}</td>
               <td className="num">{r.education_expense.toLocaleString()}</td>
               <td className={'num ' + (r.cashflow < 0 ? 'danger-text' : '')}>{r.cashflow.toLocaleString()}</td>
+              <td className="num">{r.investment.toLocaleString()}</td>
               <td className="num">{r.savings.toLocaleString()}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="muted small">単位: 円　/　収入は給与＋年金。65 歳以降は年金を自動加算</p>
+      <p className="muted small">単位: 円　/　収入は給与＋年金。65 歳以降は年金を自動加算。投資残高は運用利回り反映後の累計評価額</p>
     </div>
   );
 }
@@ -642,7 +645,7 @@ function LoanTable({ rows, monthlyPayment }: { rows: YearRow[]; monthlyPayment: 
           ))}
         </tbody>
       </table>
-      <p className="muted small">単位: 円</p>
+      <p className="muted small">単位: 円　/　元利均等返済。完済後は 0 円</p>
     </div>
   );
 }
