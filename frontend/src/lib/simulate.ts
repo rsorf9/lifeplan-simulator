@@ -127,6 +127,8 @@ export function simulate(
   const manualAlloc = !!extra.manual_alloc;
   const hasRetirementBonus = !!extra.has_retirement_bonus;
   const retirementBonus = (inputs.retirement_bonus ?? 0) * 10000;
+  const inflationEnabled = !!extra.inflation_enabled;
+  const inflationRate = inflationEnabled ? (inputs.inflation_rate ?? 0) / 100 : 0;
   const annualRent = (inputs.monthly_rent ?? 0) * 10000 * 12;
   const spouseAgeStart = inputs.spouse_age ?? currentAge;
   const spouseRetirementAge = inputs.spouse_retirement_age ?? retirementAge;
@@ -258,13 +260,18 @@ export function simulate(
     }
 
     // 教育費
-    const educationExpense = children.reduce(
+    const rawEducationExpense = children.reduce(
       (sum, c) => sum + annualEducationCost(c.age + y, c.path),
       0
     );
+
+    // 物価上昇率（複利）を生活費・教育費に適用
+    const inflationFactor = inflationEnabled ? Math.pow(1 + inflationRate, y) : 1;
+    const inflatedLivingExpense = annualLivingExpense * inflationFactor;
+    const educationExpense = rawEducationExpense * inflationFactor;
     totalEducationExpense += educationExpense;
 
-    const totalExpense = yearlyLoanPay + annualLivingExpense + educationExpense;
+    const totalExpense = yearlyLoanPay + inflatedLivingExpense + educationExpense;
     const grossCashflow = yearIncome - totalExpense;
     minCashflow = Math.min(minCashflow, grossCashflow);
 
@@ -307,7 +314,7 @@ export function simulate(
       own_income: Math.round(ownIncome),
       spouse_income: Math.round(spIncome),
       income: Math.round(yearIncome),
-      living_expense: Math.round(annualLivingExpense),
+      living_expense: Math.round(inflatedLivingExpense),
       education_expense: Math.round(educationExpense),
       loan_payment: Math.round(yearlyLoanPay),
       loan_interest: Math.round(yearlyInterest),

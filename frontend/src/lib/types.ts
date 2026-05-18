@@ -15,6 +15,7 @@ export interface ScenarioExtraSettings {
   is_renter?: boolean;
   manual_alloc?: boolean;
   has_retirement_bonus?: boolean;
+  inflation_enabled?: boolean;
   children?: ChildInfo[];
 }
 

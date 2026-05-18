@@ -151,6 +151,7 @@ export function ScenarioEditorPage() {
     if (s.requires === 'is_renter' && !extra.is_renter) return false;
     if (s.requires === 'is_buyer' && extra.is_renter) return false;
     if (s.requires === 'has_retirement_bonus' && !extra.has_retirement_bonus) return false;
+    if (s.requires === 'inflation_enabled' && !extra.inflation_enabled) return false;
     return true;
   });
 
@@ -292,6 +293,19 @@ export function ScenarioEditorPage() {
                 }
               />
               <span>手動配分モード（差額の上限制御を解除。超過分は貯蓄から取り崩し）</span>
+            </label>
+          )}
+
+          {activeGroup === 'expense' && (
+            <label className="spouse-toggle">
+              <input
+                type="checkbox"
+                checked={!!extra.inflation_enabled}
+                onChange={(e) =>
+                  setExtra((prev) => ({ ...prev, inflation_enabled: e.target.checked }))
+                }
+              />
+              <span>物価上昇率を反映（毎年の生活費・教育費を年複利で増加）</span>
             </label>
           )}
 
