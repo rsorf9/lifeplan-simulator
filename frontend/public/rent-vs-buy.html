@@ -165,6 +165,10 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     <div class="field"><div class="field-row"><label>頭金</label><div><input type="number" id="down" value="1000" min="0" step="50"><span class="field-unit">万円</span></div></div></div>
     <div class="field">
       <div class="field-row"><label>諸経費（仲介・登記・税金等）</label><div><input type="number" id="initBuy" value="" min="0" step="10" placeholder="物件価格×7%"><span class="field-unit">万円</span></div></div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:#475569;cursor:pointer;">
+        <input type="checkbox" id="initBuyInLoan" style="margin:0;">
+        <span>諸経費を住宅ローンに組み込む（オーバーローン）</span>
+      </label>
       <button class="cost-calc-btn" onclick="openPurchaseCalc()">📋 諸経費の概算を計算する</button>
     </div>
     <div class="field"><div class="field-row"><label>借入期間</label><div><input type="number" id="loanYears" value="35" min="1" step="1"><span class="field-unit">年</span></div></div></div>
@@ -247,6 +251,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
 <script>
 const KEY = "rentVsBuyV3";
 const FIELDS = ["rent","initRent","renewal","moving","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
+const CHECK_FIELDS = ["initBuyInLoan"];
 
 // 賃貸初期費用の項目定義
 const RENTAL_ITEMS = [
@@ -297,15 +302,23 @@ function restore() {
       const el = document.getElementById(f);
       if (el) el.value = saved[f];
     }
+    for (const f of CHECK_FIELDS) if (saved[f] !== undefined) {
+      const el = document.getElementById(f);
+      if (el) el.checked = !!saved[f];
+    }
   } catch (e) {}
 }
 function saveAll() {
   const obj = {};
   for (const f of FIELDS) obj[f] = document.getElementById(f).value;
+  for (const f of CHECK_FIELDS) obj[f] = document.getElementById(f).checked;
   try { localStorage.setItem(KEY, JSON.stringify(obj)); } catch (e) {}
 }
 restore();
 for (const f of FIELDS) {
+  document.getElementById(f).addEventListener("change", () => { saveAll(); calculate(); });
+}
+for (const f of CHECK_FIELDS) {
   document.getElementById(f).addEventListener("change", () => { saveAll(); calculate(); });
 }
 
@@ -340,6 +353,10 @@ function calculate() {
   // 諸経費：手動入力があればそれを使い、なければ 物件価格×7%
   const initBuyInput = parseFloat(document.getElementById("initBuy").value);
   const initBuyFees = Number.isFinite(initBuyInput) && initBuyInput >= 0 ? initBuyInput : price * 0.07;
+  const initBuyInLoan = document.getElementById("initBuyInLoan").checked;
+  // 諸経費をローンに組み込む場合は初期支出から除外し、借入元金に上乗せ
+  const initBuyCash = initBuyInLoan ? 0 : initBuyFees;
+  const initBuyInLoanAmount = initBuyInLoan ? initBuyFees : 0;
 
   // 賃貸計算（すべて万円）
   const renewalsCount = Math.max(0, Math.floor(period / 2));
@@ -351,14 +368,15 @@ function calculate() {
   const rentMonthlyAvg = rentTotal / period / 12;
 
   // 購入計算（物件価値の変動は考慮しない＝純粋な支出比較）
-  const loanPrincipalYen = Math.max(price - down, 0) * 10000;
+  // 借入元金 = (物件価格 - 頭金) + ローン組込みの諸経費
+  const loanPrincipalYen = (Math.max(price - down, 0) + initBuyInLoanAmount) * 10000;
   const mPayYen = monthlyPayment(loanPrincipalYen, rate, loanYears);
   const monthsInPeriod = Math.min(period * 12, loanYears * 12);
   const loanPaidMan = (mPayYen * monthsInPeriod) / 10000;
   const maintTotal = maint * 12 * period;
   const propTaxTotal = propTax * period;
   const insRenewalTotal = insRenewal * period;
-  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal + propTaxTotal + insRenewalTotal;
+  const buyTotal = down + initBuyCash + loanPaidMan + maintTotal + propTaxTotal + insRenewalTotal;
   const buyCashMonthlyMan = (mPayYen / 10000) + maint + (propTax / 12) + (insRenewal / 12);
   const buyMonthlyAvg = buyTotal / period / 12;
 
@@ -384,9 +402,15 @@ function calculate() {
   }
 
   // 表
+  const buyInitLabel = initBuyInLoan
+    ? `初期費用（頭金のみ・諸経費はローン組込み）`
+    : `初期費用（頭金＋諸経費）`;
+  const buyLoanLabel = initBuyInLoan
+    ? `家賃 / ローン返済（諸経費${initBuyFees.toFixed(0)}万円込み）`
+    : `家賃 / ローン返済（期間中）`;
   const rows = [
-    ["初期費用",                     initRent,            down + initBuyFees],
-    ["家賃 / ローン返済（期間中）",    rentMonthlyTotal,    loanPaidMan],
+    [buyInitLabel,                   initRent,            down + initBuyCash],
+    [buyLoanLabel,                   rentMonthlyTotal,    loanPaidMan],
     ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
     ["固定資産税（期間累計）",        0,                   propTaxTotal],

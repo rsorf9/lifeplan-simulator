@@ -128,7 +128,9 @@ export function simulate(
 
   // 住宅
   const purchaseAge = inputs.house_purchase_age ?? currentAge;
-  const purchaseYear = Math.max(0, purchaseAge - currentAge);
+  const purchaseDelta = purchaseAge - currentAge; // 負=過去購入, 0=即購入, 正=将来購入
+  const purchaseYear = Math.max(0, purchaseDelta);
+  const yearsAlreadyPaid = Math.max(0, -purchaseDelta);
   const housePrice = (inputs.house_price ?? 0) * 10000;
   const downPayment = (inputs.down_payment ?? 0) * 10000;
   const loanPrincipal = Math.max(housePrice - downPayment, 0);
@@ -142,6 +144,28 @@ export function simulate(
       ? loanPrincipal / months
       : (loanPrincipal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
   const annualLoanPayment = monthlyPayment * 12;
+
+  // 過去購入：現時点までに支払い済みの月数分を差し引いた残高を算出
+  const monthsAlreadyPaid = Math.min(months, yearsAlreadyPaid * 12);
+  let initialLoanBalance = 0;
+  if (yearsAlreadyPaid > 0 && loanPrincipal > 0) {
+    if (monthsAlreadyPaid >= months) {
+      initialLoanBalance = 0;
+    } else if (monthlyRate === 0) {
+      initialLoanBalance = Math.max(
+        0,
+        loanPrincipal - monthlyPayment * monthsAlreadyPaid
+      );
+    } else {
+      const r = monthlyRate;
+      const k = monthsAlreadyPaid;
+      const pow = Math.pow(1 + r, k);
+      initialLoanBalance = Math.max(
+        0,
+        loanPrincipal * pow - (monthlyPayment * (pow - 1)) / r
+      );
+    }
+  }
 
   // 収入
   const ownAnnualIncome = (inputs.annual_income ?? 0) * 10000;
@@ -159,8 +183,9 @@ export function simulate(
   // ストック
   let savings = (inputs.current_savings ?? 0) * 10000;
   let investment = (inputs.current_investment ?? 0) * 10000;
-  let loanBalance = 0;
-  let hasPurchased = purchaseYear === 0 ? false : false; // ループ内で処理
+  // 過去購入の場合：頭金は既に支払い済みのため貯蓄から減算しない。現時点の残高をローン残として保持
+  let loanBalance = yearsAlreadyPaid > 0 ? initialLoanBalance : 0;
+  let hasPurchased = yearsAlreadyPaid > 0; // 既に過去購入済みなら true
   const investRate = (inputs.expected_return ?? 0) / 100;
   const savingsRate = (inputs.savings_return ?? 0) / 100;
 
