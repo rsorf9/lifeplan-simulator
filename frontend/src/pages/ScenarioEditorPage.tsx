@@ -150,6 +150,7 @@ export function ScenarioEditorPage() {
     if (s.requires === 'has_spouse' && !extra.has_spouse) return false;
     if (s.requires === 'is_renter' && !extra.is_renter) return false;
     if (s.requires === 'is_buyer' && extra.is_renter) return false;
+    if (s.requires === 'has_retirement_bonus' && !extra.has_retirement_bonus) return false;
     return true;
   });
 
@@ -250,6 +251,22 @@ export function ScenarioEditorPage() {
               hasSpouse={!!extra.has_spouse}
               onChange={(v) => setExtra((prev) => ({ ...prev, has_spouse: v }))}
             />
+          )}
+
+          {activeGroup === 'income' && (
+            <label className="spouse-toggle">
+              <input
+                type="checkbox"
+                checked={!!extra.has_retirement_bonus}
+                onChange={(e) =>
+                  setExtra((prev) => ({
+                    ...prev,
+                    has_retirement_bonus: e.target.checked,
+                  }))
+                }
+              />
+              <span>退職金あり（退職年齢の収入欄に一時金として加算）</span>
+            </label>
           )}
 
           {activeGroup === 'housing' && (
