@@ -158,7 +158,7 @@ export function simulate(
 
   // ストック
   let savings = (inputs.current_savings ?? 0) * 10000;
-  let investment = 0;
+  let investment = (inputs.current_investment ?? 0) * 10000;
   let loanBalance = 0;
   let hasPurchased = purchaseYear === 0 ? false : false; // ループ内で処理
   const investRate = (inputs.expected_return ?? 0) / 100;

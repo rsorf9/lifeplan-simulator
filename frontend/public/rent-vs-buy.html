@@ -170,6 +170,8 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     <div class="field"><div class="field-row"><label>借入期間</label><div><input type="number" id="loanYears" value="35" min="1" step="1"><span class="field-unit">年</span></div></div></div>
     <div class="field"><div class="field-row"><label>金利（年率）</label><div><input type="number" id="rate" value="1.0" min="0" step="0.1"><span class="field-unit">%</span></div></div></div>
     <div class="field"><div class="field-row"><label>管理費＋修繕積立（月額）</label><div><input type="number" id="maint" value="2" min="0" step="0.5"><span class="field-unit">万円</span></div></div></div>
+    <div class="field"><div class="field-row"><label>固定資産税（年額・任意）</label><div><input type="number" id="propTax" value="12" min="0" step="1"><span class="field-unit">万円/年</span></div></div></div>
+    <div class="field"><div class="field-row"><label>火災保険料更新時（年額・任意）</label><div><input type="number" id="insRenewal" value="1" min="0" step="0.5"><span class="field-unit">万円/年</span></div></div></div>
   </div>
 
   <div class="section">
@@ -211,7 +213,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
     </div>
   </div>
 
-  <footer>※ 簡易計算です。物件価値の変動・住宅ローン控除・固定資産税・修繕実費等は含みません。詳細は FP にご相談を。</footer>
+  <footer>※ 簡易計算です。物件価値の変動・住宅ローン控除・修繕実費等は含みません。固定資産税・火災保険料は入力値を元に概算しています。詳細は FP にご相談を。</footer>
 </div>
 
 <!-- 賃貸初期費用モーダル -->
@@ -244,7 +246,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
 
 <script>
 const KEY = "rentVsBuyV3";
-const FIELDS = ["rent","initRent","renewal","moving","price","down","initBuy","loanYears","rate","maint","period"];
+const FIELDS = ["rent","initRent","renewal","moving","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
 
 // 賃貸初期費用の項目定義
 const RENTAL_ITEMS = [
@@ -331,6 +333,8 @@ function calculate() {
   const loanYears = Math.max(1, getNum("loanYears", 35));
   const rate      = getNum("rate", 1.0);
   const maint     = getNum("maint", 2);
+  const propTax   = getNum("propTax", 0);
+  const insRenewal= getNum("insRenewal", 0);
   const period    = Math.max(1, getNum("period", 10));
 
   // 諸経費：手動入力があればそれを使い、なければ 物件価格×7%
@@ -352,8 +356,10 @@ function calculate() {
   const monthsInPeriod = Math.min(period * 12, loanYears * 12);
   const loanPaidMan = (mPayYen * monthsInPeriod) / 10000;
   const maintTotal = maint * 12 * period;
-  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal;
-  const buyCashMonthlyMan = (mPayYen / 10000) + maint;
+  const propTaxTotal = propTax * period;
+  const insRenewalTotal = insRenewal * period;
+  const buyTotal = down + initBuyFees + loanPaidMan + maintTotal + propTaxTotal + insRenewalTotal;
+  const buyCashMonthlyMan = (mPayYen / 10000) + maint + (propTax / 12) + (insRenewal / 12);
   const buyMonthlyAvg = buyTotal / period / 12;
 
   // 表示
@@ -383,6 +389,8 @@ function calculate() {
     ["家賃 / ローン返済（期間中）",    rentMonthlyTotal,    loanPaidMan],
     ["更新料・引越し費用",            rentRenewalTotal + rentMovingTotal, 0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
+    ["固定資産税（期間累計）",        0,                   propTaxTotal],
+    ["火災保険料更新（期間累計）",    0,                   insRenewalTotal],
   ];
   let html = "";
   for (const r of rows) {

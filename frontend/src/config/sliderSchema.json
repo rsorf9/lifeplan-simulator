@@ -188,6 +188,18 @@
     "valueType": "float"
   },
   {
+    "key": "current_investment",
+    "label": "現在の投資金額",
+    "group": "investment",
+    "unit": "万円",
+    "min": 0,
+    "max": 30000,
+    "step": 50,
+    "default": 0,
+    "tooltip": "シミュレーション開始時点で保有している投資資産（NISA・iDeCo・株式・投信などの評価額合計）",
+    "valueType": "integer"
+  },
+  {
     "key": "monthly_investment",
     "label": "毎月の投資額",
     "group": "investment",
