@@ -23,6 +23,32 @@ export function LoginPage({ onBackToLanding }: Props) {
 
   return (
     <div className="auth-wrap auth-wrap-solo">
+      <div className="login-line-qr no-print">
+        <p className="login-line-text">
+          IDの発行を依頼する場合は<br />こちらから
+        </p>
+        <img
+          src="/line-qr.jpg"
+          alt="LINE QR"
+          className="login-line-img"
+          onError={(e) => {
+            const t = e.currentTarget;
+            // .jpg がなければ .png にフォールバック
+            if (t.src.endsWith('.jpg')) {
+              t.src = '/line-qr.png';
+              return;
+            }
+            // どちらもなければプレースホルダー表示
+            t.style.display = 'none';
+            const sib = t.nextElementSibling as HTMLElement | null;
+            if (sib) sib.style.display = 'block';
+          }}
+        />
+        <span className="login-line-fallback" style={{ display: 'none' }}>
+          📱 LINE QR
+        </span>
+      </div>
+
       <div className="auth-card">
         {onBackToLanding && (
           <button className="auth-back" onClick={onBackToLanding}>

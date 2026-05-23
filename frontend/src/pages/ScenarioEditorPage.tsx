@@ -21,6 +21,8 @@ import type { YearRow } from '../lib/simulate';
 import { DynamicSlider, type SliderDef } from '../components/DynamicSlider';
 import { ChildrenManager } from '../components/ChildrenManager';
 import { SpouseToggle } from '../components/SpouseToggle';
+import { Tutorial, hasSeenTutorial } from '../components/Tutorial';
+import { InputAssist } from '../components/InputAssist';
 import schema from '../config/sliderSchema.json';
 import { GROUP_HINTS } from '../config/groupHints';
 import type {
@@ -92,6 +94,8 @@ export function ScenarioEditorPage() {
   const [activeChart, setActiveChart] = useState<ChartTab>('asset');
   const [renaming, setRenaming] = useState(false);
   const [tmpName, setTmpName] = useState('');
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [assistOpen, setAssistOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
   const [printCoverEnabled, setPrintCoverEnabled] = useState(true);
   const [printSelection, setPrintSelection] = useState<Record<ChartTab, boolean>>({
@@ -118,6 +122,13 @@ export function ScenarioEditorPage() {
         setExtra(s.extra_settings ?? { has_spouse: false, children: [] });
       });
   }, [id]);
+
+  // 初回訪問時にチュートリアルを自動表示
+  useEffect(() => {
+    if (!hasSeenTutorial()) {
+      setTutorialOpen(true);
+    }
+  }, []);
 
   const result = useMemo(() => simulate(inputs, extra), [inputs, extra]);
   const monthlyAllocMax = result.summary.monthly_alloc_max_year0;
@@ -226,7 +237,13 @@ export function ScenarioEditorPage() {
             </span>
           )}
         </h1>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => setTutorialOpen(true)} className="secondary" title="使い方を見る">
+            📖 チュートリアル
+          </button>
+          <button onClick={() => setAssistOpen(true)} className="secondary" title="プリセットで一括入力">
+            💡 入力サポート
+          </button>
           <button onClick={() => setPrintOpen(true)} className="secondary">印刷</button>
           <button onClick={save} disabled={saving}>
             {saving ? '保存中...' : '保存'}
@@ -422,6 +439,18 @@ export function ScenarioEditorPage() {
           </div>
         </section>
       </div>
+
+      <Tutorial open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+      <InputAssist
+        open={assistOpen}
+        onClose={() => setAssistOpen(false)}
+        currentInputs={inputs}
+        currentExtra={extra}
+        onApply={(nextInputs, nextExtra) => {
+          setInputs(nextInputs);
+          setExtra(nextExtra);
+        }}
+      />
 
       {printOpen && (
         <div className="modal-back" onClick={() => setPrintOpen(false)}>
