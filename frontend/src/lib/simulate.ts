@@ -127,6 +127,7 @@ export function simulate(
   const manualAlloc = !!extra.manual_alloc;
   const hasRetirementBonus = !!extra.has_retirement_bonus;
   const retirementBonus = (inputs.retirement_bonus ?? 0) * 10000;
+  const spouseRetirementBonus = (inputs.spouse_retirement_bonus ?? 0) * 10000;
   const inflationEnabled = !!extra.inflation_enabled;
   const inflationRate = inflationEnabled ? (inputs.inflation_rate ?? 0) / 100 : 0;
   const annualRent = (inputs.monthly_rent ?? 0) * 10000 * 12;
@@ -228,14 +229,22 @@ export function simulate(
     // 退職金（一時金）：本人の退職年齢の年の収入欄に加算
     const retirementBonusThisYear =
       hasRetirementBonus && age === retirementAge ? retirementBonus : 0;
+    // 配偶者の退職金：配偶者ありかつ退職金ありの場合、配偶者の退職年齢年の収入欄に加算
+    const spouseRetirementBonusThisYear =
+      hasRetirementBonus &&
+      hasSpouse &&
+      sAge !== null &&
+      sAge === spouseRetirementAge
+        ? spouseRetirementBonus
+        : 0;
     const ownPension = age >= PENSION_START_AGE ? PENSION_ANNUAL_PER_PERSON : 0;
     const spPension =
       hasSpouse && sAge !== null && sAge >= PENSION_START_AGE
         ? PENSION_ANNUAL_PER_PERSON
         : 0;
-    // 退職金は本人側の収入に合算（CF表の収入欄でまとめて表示）
+    // 退職金は各自の収入に合算（CF表の収入欄でまとめて表示）
     const ownIncome = ownSalary + ownPension + retirementBonusThisYear;
-    const spIncome = spSalary + spPension;
+    const spIncome = spSalary + spPension + spouseRetirementBonusThisYear;
     const yearIncome = ownIncome + spIncome;
     totalPensionReceived += ownPension + spPension;
 

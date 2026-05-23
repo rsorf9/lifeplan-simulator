@@ -151,6 +151,11 @@ export function ScenarioEditorPage() {
     if (s.requires === 'is_renter' && !extra.is_renter) return false;
     if (s.requires === 'is_buyer' && extra.is_renter) return false;
     if (s.requires === 'has_retirement_bonus' && !extra.has_retirement_bonus) return false;
+    if (
+      s.requires === 'has_retirement_bonus_spouse' &&
+      !(extra.has_retirement_bonus && extra.has_spouse)
+    )
+      return false;
     if (s.requires === 'inflation_enabled' && !extra.inflation_enabled) return false;
     return true;
   });

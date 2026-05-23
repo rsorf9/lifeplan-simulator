@@ -73,16 +73,29 @@
   },
   {
     "key": "retirement_bonus",
-    "label": "退職金（一時金）",
+    "label": "退職金（本人・一時金）",
     "group": "income",
     "unit": "万円",
     "min": 0,
     "max": 10000,
     "step": 50,
     "default": 1000,
-    "tooltip": "退職時に一括で受給する退職金。退職年齢の収入欄に加算される（配偶者ありの場合は世帯合計を入力）",
+    "tooltip": "本人の退職時に一括で受給する退職金。本人の退職年齢の収入欄に加算される",
     "valueType": "integer",
     "requires": "has_retirement_bonus"
+  },
+  {
+    "key": "spouse_retirement_bonus",
+    "label": "退職金（配偶者・一時金）",
+    "group": "income",
+    "unit": "万円",
+    "min": 0,
+    "max": 10000,
+    "step": 50,
+    "default": 1000,
+    "tooltip": "配偶者の退職時に一括で受給する退職金。配偶者の退職年齢の収入欄に加算される",
+    "valueType": "integer",
+    "requires": "has_retirement_bonus_spouse"
   },
   {
     "key": "monthly_rent",
