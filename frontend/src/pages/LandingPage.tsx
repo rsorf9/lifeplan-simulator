@@ -86,7 +86,7 @@ export function LandingPage({ onProceedToLogin }: Props) {
 
               <h4>7. お問い合わせ</h4>
               <p>
-                本ポリシーに関するお問い合わせは管理者（54551491mssa@gmail.com）までご連絡ください。
+                本ポリシーに関するお問い合わせは管理者（rsorf9@gmail.com）までご連絡ください。
               </p>
             </div>
           </details>
