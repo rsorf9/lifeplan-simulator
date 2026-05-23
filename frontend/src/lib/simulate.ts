@@ -184,8 +184,7 @@ export function simulate(
   const annualLivingSpecial = (inputs.annual_expense ?? 0) * 10000;
   const annualLivingExpense = monthlyLivingExpense * 12 + annualLivingSpecial;
 
-  // 投入希望（年額）
-  const inputSavingsAnnual = (inputs.monthly_savings ?? 0) * 10000 * 12;
+  // 投入希望（年額）：差額はすべて貯蓄に積み上がり、そこから投資へ振替
   const inputInvestmentAnnual = (inputs.monthly_investment ?? 0) * 10000 * 12;
 
   // ストック
@@ -284,29 +283,28 @@ export function simulate(
     const grossCashflow = yearIncome - totalExpense;
     minCashflow = Math.min(minCashflow, grossCashflow);
 
-    // 貯蓄・投資の配分
-    // 自動配分（既定）：差額の範囲内で貯蓄→投資の優先順位で自動制限
-    // 手動配分（manual_alloc=true）：入力値をそのまま拠出。不足分は貯蓄から取り崩し
-    let actualSavingsContrib = 0;
+    // 配分ロジック：
+    //   1) 差額（収入−支出）は全額が預貯金に入る
+    //   2) 預貯金から「毎月の投資額×12」を投資へ振替
+    //   3) 自動配分時は預貯金残高を上限に振替（残高不足なら可能額のみ）
+    //   4) 手動配分（manual_alloc=true）は不足でも全額振替（預貯金マイナス可）
+    const residual = grossCashflow; // 差額は全額預貯金へ
+    // 預貯金の運用後残高（振替前）
+    const savingsAfterYield = savings * (1 + savingsRate) + residual;
     let actualInvestmentContrib = 0;
-    let residual = grossCashflow;
     if (manualAlloc) {
-      actualSavingsContrib = inputSavingsAnnual;
       actualInvestmentContrib = inputInvestmentAnnual;
-      residual = grossCashflow - actualSavingsContrib - actualInvestmentContrib;
-    } else if (grossCashflow > 0) {
-      actualSavingsContrib = Math.min(inputSavingsAnnual, grossCashflow);
-      const remaining = grossCashflow - actualSavingsContrib;
-      actualInvestmentContrib = Math.min(inputInvestmentAnnual, remaining);
-      residual = remaining - actualInvestmentContrib;
+    } else {
+      actualInvestmentContrib = Math.min(
+        inputInvestmentAnnual,
+        Math.max(0, savingsAfterYield)
+      );
     }
-    // grossCashflow <= 0 のときは contrib=0, residual=grossCashflow（マイナスを貯蓄から取り崩し）
+    const actualSavingsContrib = residual - actualInvestmentContrib; // CF表互換（差額のうち最終的に貯蓄に残る金額）
 
     // ストック更新
-    // 投資：年初残高に運用益＋拠出
     investment = investment * (1 + investRate) + actualInvestmentContrib;
-    // 預貯金：年初残高に運用益＋拠出＋未配分残（または不足分の取り崩し）
-    savings = savings * (1 + savingsRate) + actualSavingsContrib + residual;
+    savings = savingsAfterYield - actualInvestmentContrib;
 
     const houseValueInNW = hasPurchased ? housePrice * 0.7 : 0;
     const netWorth = savings + investment - loanBalance + houseValueInNW;

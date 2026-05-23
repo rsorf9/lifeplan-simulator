@@ -160,32 +160,28 @@ export function ScenarioEditorPage() {
     return true;
   });
 
-  const monthlySavings = inputs.monthly_savings ?? 0;
   const monthlyInvest = inputs.monthly_investment ?? 0;
 
   const manualAlloc = !!extra.manual_alloc;
 
   const sliderMaxOverride = (key: string): number | undefined => {
     if (manualAlloc) return undefined; // 手動配分時は schema 上限をそのまま使用
-    if (key === 'monthly_savings') {
-      return Math.max(0, monthlyAllocMax - monthlyInvest);
-    }
     if (key === 'monthly_investment') {
-      return Math.max(0, monthlyAllocMax - monthlySavings);
+      // 月間差額を超える振替は通常不可（足りない分は貯蓄取り崩しになるので警告のみ）
+      return undefined;
     }
     return undefined;
   };
 
   const sliderHelper = (key: string): string | undefined => {
-    if (key === 'monthly_savings' || key === 'monthly_investment') {
-      const used = monthlySavings + monthlyInvest;
-      const remain = monthlyAllocMax - used;
+    if (key === 'monthly_investment') {
+      const remain = monthlyAllocMax - monthlyInvest;
       if (manualAlloc) {
-        return remain >= 0
-          ? `手動配分中。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　残り: ${remain.toFixed(1)} 万円`
-          : `手動配分中。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　超過分 ${Math.abs(remain).toFixed(1)} 万円は貯蓄から取り崩し`;
+        return `手動配分中。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　投資振替: ${monthlyInvest.toFixed(1)} 万円（不足分は預貯金残高から取り崩し）`;
       }
-      return `月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　残り: ${Math.max(0, remain).toFixed(1)} 万円`;
+      return remain >= 0
+        ? `差額はすべて預貯金へ → ここから投資へ振替。月間の差額: ${monthlyAllocMax.toFixed(1)} 万円　/　投資後の貯蓄積み増し: ${remain.toFixed(1)} 万円/月`
+        : `投資振替額が月間差額を超えています（${Math.abs(remain).toFixed(1)} 万円/月）。不足は既存の預貯金から取り崩し`;
     }
     return undefined;
   };
@@ -297,7 +293,7 @@ export function ScenarioEditorPage() {
                   setExtra((prev) => ({ ...prev, manual_alloc: e.target.checked }))
                 }
               />
-              <span>手動配分モード（差額の上限制御を解除。超過分は貯蓄から取り崩し）</span>
+              <span>手動配分モード（投資振替額の上限制御を解除。預貯金不足でも振替）</span>
             </label>
           )}
 

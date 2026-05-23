@@ -221,18 +221,6 @@
     "valueType": "integer"
   },
   {
-    "key": "monthly_savings",
-    "label": "毎月の貯蓄額",
-    "group": "savings",
-    "unit": "万円",
-    "min": 0,
-    "max": 100,
-    "step": 1,
-    "default": 8,
-    "tooltip": "余剰金（差額）から配分。投資との合計が月間余剰を超えないように自動調整",
-    "valueType": "integer"
-  },
-  {
     "key": "savings_return",
     "label": "預貯金の期待利回り",
     "group": "savings",
@@ -258,14 +246,14 @@
   },
   {
     "key": "monthly_investment",
-    "label": "毎月の投資額",
+    "label": "毎月の投資額（貯蓄から振替）",
     "group": "investment",
     "unit": "万円",
     "min": 0,
     "max": 100,
     "step": 1,
     "default": 5,
-    "tooltip": "余剰金（差額）から配分。貯蓄との合計が月間余剰を超えないように自動調整",
+    "tooltip": "預貯金から投資へ毎月この金額を振り替えます。差額（収入−支出）はすべて預貯金に積み上がり、その中から投資に回します。",
     "valueType": "integer"
   },
   {
