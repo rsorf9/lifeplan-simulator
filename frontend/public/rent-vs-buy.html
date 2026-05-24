@@ -156,6 +156,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
       <button class="cost-calc-btn" onclick="openRentalCalc()">📋 初期費用の概算を計算する</button>
     </div>
     <div class="field"><div class="field-row"><label>更新料（2年毎）</label><div><input type="number" id="renewal" value="1" min="0" step="0.5"><span class="field-unit">ヶ月分</span></div></div></div>
+    <div class="field"><div class="field-row"><label>火災保険料更新（年額・任意）</label><div><input type="number" id="rentInsRenewal" value="1" min="0" step="0.5"><span class="field-unit">万円/年</span></div></div></div>
   </div>
 
   <div class="section">
@@ -214,9 +215,17 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
       <canvas id="chartTotal" height="180"></canvas>
       <canvas id="chartMonthly" height="180" style="margin-top:16px"></canvas>
     </div>
+
+    <div class="section">
+      <h2>⚖️ 損益分岐点（累計支出の推移）</h2>
+      <p class="muted small" id="breakevenNote" style="margin-top:0">
+        ※ 賃貸と購入の累計支出を年単位で比較。線が交差する年が損益分岐点です。
+      </p>
+      <canvas id="chartBreakeven" height="240"></canvas>
+    </div>
   </div>
 
-  <footer>※ 簡易計算です。物件価値の変動・住宅ローン控除・修繕実費等は含みません。固定資産税・火災保険料は入力値を元に概算しています。詳細は FP にご相談を。</footer>
+  <footer>※ 簡易計算です。物件価値の変動・住宅ローン控除・修繕実費等は含みません。固定資産税・火災保険料は入力値を元に概算しています。損益分岐点グラフは比較期間と 40 年のうち長い方まで描画します。詳細は FP にご相談を。</footer>
 </div>
 
 <!-- 賃貸初期費用モーダル -->
@@ -249,7 +258,7 @@ footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 16px 0 4p
 
 <script>
 const KEY = "rentVsBuyV3";
-const FIELDS = ["rent","initRent","renewal","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
+const FIELDS = ["rent","initRent","renewal","rentInsRenewal","price","down","initBuy","loanYears","rate","maint","propTax","insRenewal","period"];
 const CHECK_FIELDS = ["initBuyInLoan"];
 
 // 賃貸初期費用の項目定義
@@ -339,6 +348,7 @@ function calculate() {
   const rent      = getNum("rent", 10);
   const initRent  = getNum("initRent", 30);
   const renewal   = getNum("renewal", 1);
+  const rentInsRenewal = getNum("rentInsRenewal", 0);
   const price     = getNum("price", 4000);
   const down      = getNum("down", 1000);
   const loanYears = Math.max(1, getNum("loanYears", 35));
@@ -360,7 +370,8 @@ function calculate() {
   const renewalsCount = Math.max(0, Math.floor(period / 2));
   const rentMonthlyTotal  = rent * 12 * period;
   const rentRenewalTotal  = rent * renewal * renewalsCount;
-  const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal;
+  const rentInsTotal      = rentInsRenewal * period; // 火災保険更新（年額×期間）
+  const rentTotal = initRent + rentMonthlyTotal + rentRenewalTotal + rentInsTotal;
   const rentMonthlyAvg = rentTotal / period / 12;
 
   // 購入計算（物件価値の変動は考慮しない＝純粋な支出比較）
@@ -410,7 +421,7 @@ function calculate() {
     ["更新料",                        rentRenewalTotal,    0],
     ["維持費（管理費+修繕）",         0,                   maintTotal],
     ["固定資産税（期間累計）",        0,                   propTaxTotal],
-    ["火災保険料更新（期間累計）",    0,                   insRenewalTotal],
+    ["火災保険料更新（期間累計）",    rentInsTotal,        insRenewalTotal],
   ];
   let html = "";
   for (const r of rows) {
@@ -463,6 +474,105 @@ function calculate() {
         title: { display: true, text: "毎月の固定支出（万円）" },
       },
       scales: { y: { beginAtZero: true } },
+    },
+  });
+
+  // ===== 損益分岐点グラフ =====
+  // 賃貸／購入の累計支出を年単位で計算（比較期間 vs 40 年で上限）
+  const horizon = Math.max(period, 40);
+  const labels = [];
+  const rentSeries = [];
+  const buySeries = [];
+
+  // 累計（年初時点）
+  for (let y = 0; y <= horizon; y++) {
+    labels.push(`${y} 年`);
+
+    // ----- 賃貸累計 -----
+    // 初期費用 + 家賃 × 12 × y + 更新料 × floor(y/2) + 火災保険 × y
+    const rentCumRenewals = Math.max(0, Math.floor(y / 2));
+    const rentCum =
+      (y === 0 ? initRent : initRent + rent * 12 * y + rent * renewal * rentCumRenewals + rentInsRenewal * y);
+    rentSeries.push(Math.round(rentCum));
+
+    // ----- 購入累計 -----
+    // 初期支出（頭金 + 諸経費現金）+ ローン返済（min(y, loanYears)）+ 維持費 × y + 固定資産税 × y + 火災保険 × y
+    const monthsPaid = Math.min(y * 12, loanYears * 12);
+    const loanPaidCum = (mPayYen * monthsPaid) / 10000;
+    const buyCum =
+      (y === 0 ? down + initBuyCash : down + initBuyCash + loanPaidCum + maint * 12 * y + propTax * y + insRenewal * y);
+    buySeries.push(Math.round(buyCum));
+  }
+
+  // 損益分岐年を検出（賃貸累計 ≧ 購入累計に切り替わる初年）
+  let breakevenYear = null;
+  for (let y = 1; y <= horizon; y++) {
+    if (rentSeries[y] >= buySeries[y]) { breakevenYear = y; break; }
+  }
+
+  const note = document.getElementById("breakevenNote");
+  if (breakevenYear !== null) {
+    const diffAtBE = rentSeries[breakevenYear] - buySeries[breakevenYear];
+    note.innerHTML =
+      `🟢 損益分岐点：<b>${breakevenYear} 年目</b>付近で購入が賃貸より割安になります（${breakevenYear} 年目時点で購入が ${fmtMan(diffAtBE)} 安い）。`;
+  } else {
+    note.innerHTML =
+      `🔵 ${horizon} 年以内では <b>賃貸の方が割安</b>。物件価格・頭金・金利を見直すと分岐点が前倒しになる可能性があります。`;
+  }
+
+  if (charts.breakeven) charts.breakeven.destroy();
+  charts.breakeven = new Chart(document.getElementById("chartBreakeven"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "賃貸 累計支出",
+          data: rentSeries,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.15)",
+          fill: false,
+          tension: 0.1,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+        {
+          label: "購入 累計支出",
+          data: buySeries,
+          borderColor: "#22c55e",
+          backgroundColor: "rgba(34,197,94,0.15)",
+          fill: false,
+          tension: 0.1,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom" },
+        title: {
+          display: true,
+          text: breakevenYear !== null
+            ? `累計支出の推移（損益分岐: 約 ${breakevenYear} 年目）`
+            : `累計支出の推移（${horizon} 年では未分岐）`,
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} 万円`,
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: "経過年数" } },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "累計支出（万円）" },
+          ticks: { callback: (v) => `${v.toLocaleString()}` },
+        },
+      },
     },
   });
 }
